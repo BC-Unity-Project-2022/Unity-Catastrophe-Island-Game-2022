@@ -1,3 +1,4 @@
+using Unity.Netcode;
 using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
@@ -8,7 +9,7 @@ public class CameraFollow : MonoBehaviour
 
     void Update()
     {
-        if (playerTransform != null)
+        if (NetworkManager.Singleton.IsServer && playerTransform != null)
         {
             transform.position = playerTransform.position + followOffset;
         }
