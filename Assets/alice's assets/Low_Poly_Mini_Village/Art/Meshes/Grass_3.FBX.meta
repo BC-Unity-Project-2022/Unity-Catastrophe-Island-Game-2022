@@ -1,0 +1,297 @@
+fileFormatVersion: 2
+guid: eee5ad291a303524a8c9c983668125c9
+timeCreated: 1540383069
+licenseType: Store
+ModelImporter:
+  serializedVersion: 22
+  fileIDToRecycleName:
+    100000: ' 1'
+    100002: Caravan_1
+    100004: Church_1
+    100006: Electric_pole
+    100008: Grass_1
+    100010: Grass_2
+    100012: Grass_3
+    100014: //RootNode
+    100016: Ground
+    100018: Hood
+    100020: House_1
+    100022: House_2
+    100024: House_3
+    100026: Road_sign1
+    100028: Rock_1
+    100030: Rock_2
+    100032: Rock_3
+    100034: Rock_4
+    100036: Sky001
+    100038: Tree_1
+    100040: Tree_2
+    100042: Tree_3
+    100044: Tree_4
+    100046: Water
+    100048: Wc
+    100050: Wc_door
+    100052: Well1
+    100054: Wheel_Back_Left
+    100056: Wheel_Back_Right
+    100058: Wheel_Front_Left
+    100060: Wheel_Front_Right
+    100062: Wooden_barrel
+    400000: ' 1'
+    400002: Caravan_1
+    400004: Church_1
+    400006: Electric_pole
+    400008: Grass_1
+    400010: Grass_2
+    400012: //RootNode
+    400014: Grass_3
+    400016: Ground
+    400018: Hood
+    400020: House_1
+    400022: House_2
+    400024: House_3
+    400026: Road_sign1
+    400028: Rock_1
+    400030: Rock_2
+    400032: Rock_3
+    400034: Rock_4
+    400036: Sky001
+    400038: Tree_1
+    400040: Tree_2
+    400042: Tree_3
+    400044: Tree_4
+    400046: Water
+    400048: Wc
+    400050: Wc_door
+    400052: Well1
+    400054: Wheel_Back_Left
+    400056: Wheel_Back_Right
+    400058: Wheel_Front_Left
+    400060: Wheel_Front_Right
+    400062: Wooden_barrel
+    2300000: ' 1'
+    2300002: Church_1
+    2300004: Electric_pole
+    2300006: Grass_1
+    2300008: Grass_2
+    2300010: Grass_3
+    2300012: Ground
+    2300014: Hood
+    2300016: House_1
+    2300018: House_2
+    2300020: House_3
+    2300022: Road_sign1
+    2300024: Rock_1
+    2300026: Rock_2
+    2300028: Rock_3
+    2300030: Rock_4
+    2300032: Tree_1
+    2300034: Tree_2
+    2300036: Tree_3
+    2300038: Tree_4
+    2300040: Water
+    2300042: Wc
+    2300044: Wc_door
+    2300046: Well1
+    2300048: Wheel_Back_Left
+    2300050: Wheel_Back_Right
+    2300052: Wheel_Front_Left
+    2300054: Wheel_Front_Right
+    2300056: Wooden_barrel
+    2300058: //RootNode
+    3300000: ' 1'
+    3300002: Church_1
+    3300004: Electric_pole
+    3300006: Grass_1
+    3300008: Grass_2
+    3300010: Grass_3
+    3300012: Ground
+    3300014: Hood
+    3300016: House_1
+    3300018: House_2
+    3300020: House_3
+    3300022: Road_sign1
+    3300024: Rock_1
+    3300026: Rock_2
+    3300028: Rock_3
+    3300030: Rock_4
+    3300032: Tree_1
+    3300034: Tree_2
+    3300036: Tree_3
+    3300038: Tree_4
+    3300040: Water
+    3300042: Wc
+    3300044: Wc_door
+    3300046: Well1
+    3300048: Wheel_Back_Left
+    3300050: Wheel_Back_Right
+    3300052: Wheel_Front_Left
+    3300054: Wheel_Front_Right
+    3300056: Wooden_barrel
+    3300058: //RootNode
+    4300000: House_1
+    4300002: House_2
+    4300004: House_3
+    4300006: Church_1
+    4300008: Electric_pole
+    4300010: Tree_1
+    4300012: Tree_2
+    4300014: Tree_3
+    4300016: Tree_4
+    4300018: Rock_1
+    4300020: Rock_2
+    4300022: Rock_3
+    4300024: Rock_4
+    4300026: Well1
+    4300028: Wooden_barrel
+    4300030: Road_sign1
+    4300032: Water
+    4300034: Hood
+    4300036: Wheel_Front_Left
+    4300038: Wheel_Back_Left
+    4300040: Wheel_Front_Right
+    4300042: Wheel_Back_Right
+    4300044: Wc
+    4300046: Wc_door
+    4300048: Ground
+    4300052: Grass_1
+    4300054: Grass_2
+    4300056: Grass_3
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 05 - Default
+    second: {fileID: 2100000, guid: f7d9bda499f832e4e931cad162fa3dbf, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 07 - Default
+    second: {fileID: 2100000, guid: e7de0b8c52fa5f3448505539ed4a5019, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1422'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1435'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1467'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1478'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1636'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1658'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1753'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1754'
+    second: {fileID: 2100000, guid: 868fa0b6b781f074c9ae2b04e2c53a3d, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #25'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #26'
+    second: {fileID: 2100000, guid: 7c6a492ece7857147918649430531cf8, type: 2}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
