@@ -10,132 +10,34 @@ struct UserInput {
     public bool isJumping;
 }
 
-enum SpeedChangeTypes
-{
-    IDLE,
-    ACCELERATING,
-    ACTIVE_DECELERATING,
-    CONSTANT_SPEED,
-    PASSIVE_DECELERATING,
-}
-
-[Serializable]
-public struct MovementAnimationSettings
-{
-    public float velEpsilon; 
-    public float constSpeedVelEpsilon; 
-    public float desiredEpsilon; 
-    
-    public AnimationCurve acceleratingSpeedCurve; 
-    public AnimationCurve activeStoppingSpeedCurve; // going in the opposite direction
-    public AnimationCurve passiveStoppingSpeedCurve; // not specifying a change in direction
-    
-    public float accelerationTime; 
-    public float activeStoppingTime; 
-    public float passiveStoppingTime; 
-}
-
 public class PlayerController : NetworkBehaviour
 {
-    // public NetworkVariable<Vector3> position = new NetworkVariable<Vector3>();
-    // public NetworkVariable<Quaternion> rotation = new NetworkVariable<Quaternion>();
-
     [SerializeField] private float movementSpeed = 1; 
     [SerializeField] private float jumpVelocity = 10f; 
     [SerializeField] private float jumpCooldownSecs = 0.6f;
-
-    public MovementAnimationSettings movementAnimationSettings;
     
-    struct MovementAxis
-    {
-        private SpeedChangeTypes currentSpeedChangeType;
-        private float lastChangeTime;
+    public float velEpsilon = 0.05f; 
+    public float inputEpsilon = 0.05f; 
+    
+     public float highSpeedSlowingDownRate = 3f; 
+     
+     public float groundAcceleration = 30.0f;
+     public float groundActiveStoppingRate = 4.0f;
+     public float groundFrictionRate = 10.0f;
+     
 
-        private MovementAnimationSettings movementAnimationSettings;
+     [Range(0.0f, 1.0f)]
+     public float airAccelerationFraction = 0.5f;
+     [Range(0.0f, 1.0f)]
+     public float airFrictionRateFraction = 0.5f;
 
-        public MovementAxis(MovementAnimationSettings _movementAnimationSettings)
-        {
-            movementAnimationSettings = _movementAnimationSettings;
-            lastChangeTime = 0f;
-            currentSpeedChangeType = SpeedChangeTypes.IDLE;
-        }
-        public float ProposeNewVelocity(float input, float vel)
-        {
-            if (currentSpeedChangeType == SpeedChangeTypes.IDLE) return 0;
-            if (currentSpeedChangeType == SpeedChangeTypes.CONSTANT_SPEED) return vel;
-
-            float maxTime = currentSpeedChangeType == SpeedChangeTypes.ACCELERATING ? movementAnimationSettings.accelerationTime :
-                currentSpeedChangeType == SpeedChangeTypes.ACTIVE_DECELERATING ? movementAnimationSettings.activeStoppingTime : movementAnimationSettings.passiveStoppingTime;
-            
-            // Lerp
-            float timeScale = Math.Min(1, (Time.fixedTime - lastChangeTime) / maxTime); // a float 0 - 1
-            
-            AnimationCurve curve = currentSpeedChangeType == SpeedChangeTypes.ACCELERATING ? movementAnimationSettings.acceleratingSpeedCurve :
-                currentSpeedChangeType == SpeedChangeTypes.ACTIVE_DECELERATING ? movementAnimationSettings.activeStoppingSpeedCurve : movementAnimationSettings.passiveStoppingSpeedCurve;
-
-            float movementMagnitude = curve.Evaluate(timeScale);
-
-            float direction;
-            if (Mathf.Abs(vel) > movementAnimationSettings.velEpsilon)
-                direction = Mathf.Sign(vel);
-            else if (Mathf.Abs(input) > movementAnimationSettings.desiredEpsilon)
-                direction = Mathf.Sign(input);
-            else
-                direction = 0;
-            
-            return direction * movementMagnitude;
-        }
-        public SpeedChangeTypes UpdateSpeedChangeType(float vel, float desired)
-        {
-            bool isVelSmall = Mathf.Abs(vel) <= movementAnimationSettings.velEpsilon;
-            bool isDesiredSmall = Mathf.Abs(desired) <= movementAnimationSettings.velEpsilon;
-
-            SpeedChangeTypes newSpeedChangeType;
-            
-            if (isDesiredSmall)
-                if (isVelSmall)
-                    newSpeedChangeType = SpeedChangeTypes.IDLE;
-                else
-                    newSpeedChangeType = SpeedChangeTypes.PASSIVE_DECELERATING;
-            else
-                if (isVelSmall)
-                    newSpeedChangeType = SpeedChangeTypes.ACCELERATING;
-                else
-                    // if going in the same direction, then see what is applicable
-                    if (Mathf.Sign(vel) == Mathf.Sign(desired))
-                        // if it is close enough or we are slower than expected, start accelerating
-                        if (Mathf.Abs(vel - desired) < movementAnimationSettings.constSpeedVelEpsilon)
-                            newSpeedChangeType = SpeedChangeTypes.CONSTANT_SPEED;
-                        else if (Mathf.Abs(vel) > Mathf.Abs(desired))
-                            newSpeedChangeType = SpeedChangeTypes.PASSIVE_DECELERATING;
-                        else
-                            newSpeedChangeType = SpeedChangeTypes.ACCELERATING;
-                    else
-                        newSpeedChangeType = SpeedChangeTypes.ACTIVE_DECELERATING;
-
-            if (newSpeedChangeType != currentSpeedChangeType)
-            {
-                lastChangeTime = Time.fixedTime;
-                currentSpeedChangeType = newSpeedChangeType;
-            }
-            
-            return newSpeedChangeType;
-        }
-    }
-
-    private NetworkVariable<UserInput> userInput =
+     private NetworkVariable<UserInput> userInput =
         new NetworkVariable<UserInput>();
 
     private float previousJumpSecs;
 
-    private MovementAxis xAxis;
-    private MovementAxis zAxis;
-
     void Start()
     {
-        xAxis = new MovementAxis(movementAnimationSettings);
-        zAxis = new MovementAxis(movementAnimationSettings);
-        
         if (NetworkManager.Singleton.IsServer)
         {
             if (Camera.main != null)
@@ -143,56 +45,91 @@ public class PlayerController : NetworkBehaviour
         }
     }
 
+    private float TweakMovementVelocity(float input, float vel, bool isInAir)
+    {
+        if (Mathf.Abs(input) <= inputEpsilon)
+            return 0;
+        if (Mathf.Abs(vel) <= velEpsilon)
+            return input;
+        if (Mathf.Sign(input) == Mathf.Sign(vel))
+            return input;
+        
+        // trying to stop quickly
+        if (isInAir) return input;
+
+        return input * groundActiveStoppingRate;
+    }
+
+    private float ApplyFriction(float friction, float vel)
+    {
+        float proposedNewVel = vel - Mathf.Sign(vel) * friction * Time.fixedDeltaTime;
+        if (Mathf.Sign(proposedNewVel) == Mathf.Sign(vel)) return proposedNewVel;
+        
+        return 0;
+    }
+
     private void FixedUpdate()
     {
         if (NetworkManager.Singleton.IsServer)
         {
-            Vector3 desiredDirection = userInput.Value.DesiredDirection;
-            desiredDirection.y = 0;
-            desiredDirection.Normalize();
-            Vector3 desiredVelocity = desiredDirection * movementSpeed;
-
-            Rigidbody rb = GetComponent<Rigidbody>(); 
-
             bool isInAir = false;
-
-            var a = xAxis.UpdateSpeedChangeType(rb.velocity.x, desiredVelocity.x);
-            zAxis.UpdateSpeedChangeType(rb.velocity.z, desiredVelocity.z);
-
-
-            Vector3 pureForward = transform.forward;
-            pureForward.y = 0;
-            pureForward.Normalize();
             
-            Vector3 pureRight = transform.right;
-            pureRight.y = 0;
-            pureRight.Normalize();
+            Rigidbody rb = GetComponent<Rigidbody>();
+
+            float acceleration = groundAcceleration;
+            float frictionRate = groundFrictionRate;
+            if (isInAir)
+            {
+                acceleration *= airAccelerationFraction;
+                frictionRate *= airFrictionRateFraction;
+            }
             
-            Vector3 horizontalVel = rb.velocity;
-            horizontalVel.y = 0;
+            Vector3 initHorizontalVel = rb.velocity;
+            Vector3 finalVelocity = rb.velocity;
+            initHorizontalVel.y = 0;
 
-            Vector3 horizontalVelRelativeToTransform = transform.TransformDirection(horizontalVel);
+            // "relative" means relative to transform
+            Vector3 horizontalVelRelative = transform.InverseTransformDirection(initHorizontalVel);
+            Vector3 scaledDesiredDirectionRelative = userInput.Value.DesiredDirection;
+            scaledDesiredDirectionRelative.y = 0;
+            if (scaledDesiredDirectionRelative.sqrMagnitude > 1)
+            {
+                scaledDesiredDirectionRelative.Normalize();
+            }
+            
+            scaledDesiredDirectionRelative = new Vector3(TweakMovementVelocity(scaledDesiredDirectionRelative.x, horizontalVelRelative.x, isInAir), 0,TweakMovementVelocity(scaledDesiredDirectionRelative.z, horizontalVelRelative.z, isInAir));
+            
+            Vector3 velocityChangeRelative = scaledDesiredDirectionRelative * acceleration;
+            Vector3 velocityChange = transform.TransformDirection(velocityChangeRelative);
+            
+            finalVelocity += velocityChange * Time.fixedDeltaTime;
+            // NOTE: slow down if already past the speed limit
+            if (!isInAir)
+            {
+                if (initHorizontalVel.magnitude > movementSpeed)
+                {
+                    finalVelocity = initHorizontalVel.normalized * Mathf.Lerp(initHorizontalVel.magnitude, movementSpeed, highSpeedSlowingDownRate * Time.fixedDeltaTime);
+                }
+            }
 
-            Vector3 desiredVel =
-                new Vector3(
-                    xAxis.ProposeNewVelocity(desiredDirection.x, horizontalVelRelativeToTransform.x),
-                    0,
-                    zAxis.ProposeNewVelocity(desiredDirection.z, horizontalVelRelativeToTransform.z));
-            desiredVel *= movementSpeed;
-            Debug.Log(desiredVel);
+            finalVelocity.y = rb.velocity.y;
+            rb.velocity = finalVelocity;
 
-            Vector3 desiredVelChange = desiredVel - horizontalVel;
 
-            // TODO: clamp
-            // if (desiredVelChange.sqrMagnitude > movementSpeed * movementSpeed)
-            // {
-            //     desiredVelChange = desiredVelChange.normalized * movementSpeed;
-            // }
+                // Smooth it out
+            // TODO: how does that work with different frame rates? Maybe use a curve?
+            // Debug.Log(velocityChange);
+            // Vector3 newVelocity = Vector3.Lerp(rb.velocity, velocityChange, accelerationRate * Time.fixedTime);
+            // newVelocity.y = rb.velocity.y;
+            //
+            // rb.velocity = newVelocity;
 
-            rb.velocity += desiredVelChange;
+            // time for drag
+            rb.velocity = new Vector3(ApplyFriction(frictionRate, rb.velocity.x), rb.velocity.y, ApplyFriction(frictionRate, rb.velocity.z));
+            // TODO: drag outside of the air
 
-            if (userInput.Value.isJumping)
-                rb.velocity = new Vector3(10, 0, 0);
+            // if (userInput.Value.isJumping)
+            //     rb.velocity = new Vector3(30, 0, 0);
 
             // rb.AddForce(desiredVelocity);
 
