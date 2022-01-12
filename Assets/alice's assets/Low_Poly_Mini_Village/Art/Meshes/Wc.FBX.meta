@@ -1,0 +1,277 @@
+fileFormatVersion: 2
+guid: 5d5f4e5f582747243ac098a56ceb7275
+timeCreated: 1540304273
+licenseType: Store
+ModelImporter:
+  serializedVersion: 22
+  fileIDToRecycleName:
+    100000: //RootNode
+    100002: ' 1'
+    100004: Caravan_1
+    100006: Church_1
+    100008: Electric_pole
+    100010: Ground
+    100012: Hood
+    100014: House_1
+    100016: House_2
+    100018: House_3
+    100020: Road_sign1
+    100022: Rock_1
+    100024: Rock_2
+    100026: Rock_3
+    100028: Rock_4
+    100030: Sky001
+    100032: Tree_1
+    100034: Tree_2
+    100036: Tree_3
+    100038: Tree_4
+    100040: Water
+    100042: Wc
+    100044: Wc_door
+    100046: Well1
+    100048: Wheel_Back_Left
+    100050: Wheel_Back_Right
+    100052: Wheel_Front_Left
+    100054: Wheel_Front_Right
+    100056: Wooden_barrel
+    400000: //RootNode
+    400002: ' 1'
+    400004: Caravan_1
+    400006: Church_1
+    400008: Electric_pole
+    400010: Ground
+    400012: Hood
+    400014: House_1
+    400016: House_2
+    400018: House_3
+    400020: Road_sign1
+    400022: Rock_1
+    400024: Rock_2
+    400026: Rock_3
+    400028: Rock_4
+    400030: Sky001
+    400032: Tree_1
+    400034: Tree_2
+    400036: Tree_3
+    400038: Tree_4
+    400040: Water
+    400042: Wc
+    400044: Wc_door
+    400046: Well1
+    400048: Wheel_Back_Left
+    400050: Wheel_Back_Right
+    400052: Wheel_Front_Left
+    400054: Wheel_Front_Right
+    400056: Wooden_barrel
+    2300000: //RootNode
+    2300002: ' 1'
+    2300004: Church_1
+    2300006: Electric_pole
+    2300008: Ground
+    2300010: Hood
+    2300012: House_1
+    2300014: House_2
+    2300016: House_3
+    2300018: Road_sign1
+    2300020: Rock_1
+    2300022: Rock_2
+    2300024: Rock_3
+    2300026: Rock_4
+    2300028: Tree_1
+    2300030: Tree_2
+    2300032: Tree_3
+    2300034: Tree_4
+    2300036: Water
+    2300038: Wc
+    2300040: Wc_door
+    2300042: Well1
+    2300044: Wheel_Back_Left
+    2300046: Wheel_Back_Right
+    2300048: Wheel_Front_Left
+    2300050: Wheel_Front_Right
+    2300052: Wooden_barrel
+    3300000: //RootNode
+    3300002: ' 1'
+    3300004: Church_1
+    3300006: Electric_pole
+    3300008: Ground
+    3300010: Hood
+    3300012: House_1
+    3300014: House_2
+    3300016: House_3
+    3300018: Road_sign1
+    3300020: Rock_1
+    3300022: Rock_2
+    3300024: Rock_3
+    3300026: Rock_4
+    3300028: Tree_1
+    3300030: Tree_2
+    3300032: Tree_3
+    3300034: Tree_4
+    3300036: Water
+    3300038: Wc
+    3300040: Wc_door
+    3300042: Well1
+    3300044: Wheel_Back_Left
+    3300046: Wheel_Back_Right
+    3300048: Wheel_Front_Left
+    3300050: Wheel_Front_Right
+    3300052: Wooden_barrel
+    4300000: Wc
+    4300002: House_1
+    4300004: House_2
+    4300006: House_3
+    4300008: Church_1
+    4300010: Electric_pole
+    4300012: Tree_1
+    4300014: Tree_2
+    4300016: Tree_3
+    4300018: Tree_4
+    4300020: Rock_1
+    4300022: Rock_2
+    4300024: Rock_3
+    4300026: Rock_4
+    4300028: Well1
+    4300030: Wooden_barrel
+    4300032: Road_sign1
+    4300034: Water
+    4300036: Hood
+    4300038: Wheel_Front_Left
+    4300040: Wheel_Back_Left
+    4300042: Wheel_Front_Right
+    4300044: Wheel_Back_Right
+    4300046: Wc_door
+    4300048: Ground
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 05 - Default
+    second: {fileID: 2100000, guid: 853aa2fcc208ab34d9986560df1db2f2, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 07 - Default
+    second: {fileID: 2100000, guid: 0919fb16443aec142a6082d335678c89, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1422'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1435'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1467'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1478'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1636'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1658'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #1753'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #25'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: 'Material #26'
+    second: {fileID: 2100000, guid: f594be14fbb6cfe489efe4f2f502ccd5, type: 2}
+  materials:
+    importMaterials: 1
+    materialName: 0
+    materialSearch: 1
+    materialLocation: 0
+  animations:
+    legacyGenerateAnimations: 4
+    bakeSimulation: 0
+    resampleCurves: 1
+    optimizeGameObjects: 0
+    motionNodeName: 
+    rigImportErrors: 
+    rigImportWarnings: 
+    animationImportErrors: 
+    animationImportWarnings: 
+    animationRetargetingWarnings: 
+    animationDoRetargetingWarnings: 0
+    importAnimatedCustomProperties: 0
+    animationCompression: 1
+    animationRotationError: 0.5
+    animationPositionError: 0.5
+    animationScaleError: 0.5
+    animationWrapMode: 0
+    extraExposedTransformPaths: []
+    extraUserProperties: []
+    clipAnimations: []
+    isReadable: 1
+  meshes:
+    lODScreenPercentages: []
+    globalScale: 1
+    meshCompression: 0
+    addColliders: 0
+    importVisibility: 1
+    importBlendShapes: 1
+    importCameras: 1
+    importLights: 1
+    swapUVChannels: 0
+    generateSecondaryUV: 0
+    useFileUnits: 1
+    optimizeMeshForGPU: 1
+    keepQuads: 0
+    weldVertices: 1
+    secondaryUVAngleDistortion: 8
+    secondaryUVAreaDistortion: 15.000001
+    secondaryUVHardAngle: 88
+    secondaryUVPackMargin: 4
+    useFileScale: 1
+  tangentSpace:
+    normalSmoothAngle: 60
+    normalImportMode: 0
+    tangentImportMode: 3
+    normalCalculationMode: 4
+  importAnimation: 1
+  copyAvatar: 0
+  humanDescription:
+    serializedVersion: 2
+    human: []
+    skeleton: []
+    armTwist: 0.5
+    foreArmTwist: 0.5
+    upperLegTwist: 0.5
+    legTwist: 0.5
+    armStretch: 0.05
+    legStretch: 0.05
+    feetSpacing: 0
+    rootMotionBoneName: 
+    rootMotionBoneRotation: {x: 0, y: 0, z: 0, w: 1}
+    hasTranslationDoF: 0
+    hasExtraRoot: 0
+    skeletonHasParents: 1
+  lastHumanDescriptionAvatarSource: {instanceID: 0}
+  animationType: 0
+  humanoidOversampling: 1
+  additionalBone: 0
+  userData: 
+  assetBundleName: 
+  assetBundleVariant: 
