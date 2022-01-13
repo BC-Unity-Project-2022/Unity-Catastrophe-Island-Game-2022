@@ -7,7 +7,7 @@ public class CameraRotate : MonoBehaviour
     [SerializeField] private Vector3 followOffset;
 
     private Transform playerTransform;
-    public float rotationSpeed = 10f;
+    public float rotationSpeed = 100f;
 
     void Update()
     {
