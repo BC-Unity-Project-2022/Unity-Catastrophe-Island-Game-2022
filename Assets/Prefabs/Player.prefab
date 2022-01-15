@@ -32,7 +32,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 205212082722672703}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalPosition: {x: 0, y: 0.5, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children:
   - {fileID: 8035569197204931996}
@@ -131,19 +131,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3e36e4ba58b87c42bd0ac5892b7add0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSpeed: 10
+  movementSpeed: 7
   jumpVelocity: 10
   jumpCooldownSecs: 0.6
   velEpsilon: 0.05
-  inputEpsilon: 0.05
-  highSpeedSlowingDownRate: 3
-  groundAcceleration: 30
-  groundActiveStoppingRate: 4
-  groundFrictionRate: 10
+  groundAcceleration: 10
+  groundActiveStoppingRate: 5
+  groundPassiveStopping: 40
+  fastAccelerationTimeAfterActiveStopping: 0.1
   groundCheckSphereDisplacement: 0.65
   groundCheckSphereRadius: 0.4
   airAccelerationFraction: 0.5
-  airFrictionRateFraction: 0.5
   coyoteTime: 0.07
 --- !u!54 &4109528134260082484
 Rigidbody:
@@ -297,7 +295,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   followOffset: {x: 0, y: 0.5, z: 0}
-  rotationSpeed: 100
+  rotationSpeed: 600
 --- !u!1 &2848547946773952854
 GameObject:
   m_ObjectHideFlags: 0
