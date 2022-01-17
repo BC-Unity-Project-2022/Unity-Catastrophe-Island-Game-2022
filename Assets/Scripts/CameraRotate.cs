@@ -13,7 +13,7 @@ public class CameraRotate : MonoBehaviour
     public float maxLookUpRotation = 85;
     public float minLookDownRotation = -85;
 
-    void Update()
+    void FixedUpdate()
     {
         if (playerTransform == null) return;
         float h = Input.GetAxis("Mouse X") * rotationSpeedX * Time.deltaTime;
