@@ -22,36 +22,46 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float movementSpeed = 1; 
     [SerializeField] private float jumpVelocity = 10f; 
     [SerializeField] private float jumpCooldownSecs = 0.6f;
-    
+
     public float velEpsilon = 0.05f; 
-    
-     public float groundAcceleration = 30.0f;
-     public float groundActiveStoppingRate = 4.0f;
-     public float groundPassiveStopping = 1.0f;
-     
-     public float fastAccelerationTimeAfterActiveStopping = 1.0f;
 
-     public float groundCheckSphereDisplacement = 1.0f;
-     public float groundCheckSphereRadius = 1.0f;
+    public float groundAcceleration = 30.0f;
+    public float groundActiveStoppingRate = 4.0f;
+    public float groundPassiveStopping = 1.0f;
 
-     [Range(0.0f, 1.0f)]
-     public float airAccelerationFraction = 0.5f;
-     
-     public float coyoteTime = 0.5f;
+    public float fastAccelerationTimeAfterActiveStopping = 1.0f;
 
-     private float lastTimeOnGround;
+    public float groundCheckSphereDisplacement = 1.0f;
+    public float groundCheckSphereRadius = 1.0f;
 
-     private NetworkVariable<UserInput> userInput =
+    [Range(0.0f, 1.0f)]
+    public float airAccelerationFraction = 0.5f;
+
+    public float coyoteTime = 0.5f;
+
+    private float lastTimeOnGround;
+
+    private NetworkVariable<UserInput> userInput =
         new NetworkVariable<UserInput>(NetworkVariableReadPermission.Everyone);
 
     private float previousJumpSecs;
 
     private Rigidbody rb;
-    private Vector2 lastActiveStoppingTime;
+    private float lastActiveStoppingTime;
+
+    private PhysicMaterial physMat;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+        physMat = new PhysicMaterial();
+        physMat.bounciness = 0;
+        physMat.dynamicFriction = 0;
+        physMat.staticFriction = 0;
+        physMat.bounceCombine = PhysicMaterialCombine.Minimum;
+        physMat.frictionCombine = PhysicMaterialCombine.Minimum;
+
+        GetComponent<CapsuleCollider>().sharedMaterial = physMat;
     }
 
     void Start()
@@ -123,10 +133,8 @@ public class PlayerController : NetworkBehaviour
         }
         
         // increase the speed if moving in the opposite direction
-        if (velRelativeToInput < 0 || lastActiveStoppingTime + fastAccelerationTimeAfterActiveStopping >= Time.fixedTime)
-        {
+        if (velRelativeToInput < -velEpsilon || lastActiveStoppingTime + fastAccelerationTimeAfterActiveStopping >= Time.fixedTime)
             input *= groundActiveStoppingRate;
-        }
         
         return input * acceleration * Time.fixedDeltaTime;
     }
@@ -136,70 +144,70 @@ public class PlayerController : NetworkBehaviour
         if (IsServer && IsOwner)
         {
             bool isInAir = !isOnTheFloor() && (lastTimeOnGround + coyoteTime < Time.fixedTime);
-            
-            Vector3 initHorizontalVel = rb.velocity;
-            Vector3 finalVelocity = initHorizontalVel;
+
+            Vector3 initVelocityCache = rb.velocity;
+            Vector3 initHorizontalVel = initVelocityCache;
             initHorizontalVel.y = 0;
+            Vector3 newHorizontalVel = initHorizontalVel;
 
-            // "relative" means relative to transform
-            Vector3 horizontalVelRelative = transform.InverseTransformDirection(initHorizontalVel);
-            Vector3 scaledDesiredDirectionRelative = userInput.Value.DesiredDirection;
+            Vector3 horizontalVelRelativeToTransform = transform.InverseTransformDirection(initHorizontalVel);
             
-            scaledDesiredDirectionRelative.y = 0;
+            Vector3 scaledDesiredDirectionRelativeToTransform = userInput.Value.DesiredDirection;
+            scaledDesiredDirectionRelativeToTransform.y = 0;
+            // put a speed cap as a protection against cheaters
+            if (scaledDesiredDirectionRelativeToTransform.sqrMagnitude > 1)
+                scaledDesiredDirectionRelativeToTransform.Normalize();
 
-            if (scaledDesiredDirectionRelative.sqrMagnitude > 1)
-            {
-                scaledDesiredDirectionRelative.Normalize();
-            }
-
-            scaledDesiredDirectionRelative =
-                (scaledDesiredDirectionRelative * movementSpeed - horizontalVelRelative).normalized * scaledDesiredDirectionRelative.magnitude;
-
+            // make sure that physics doesn't go wonky on slopes when stationary
+            physMat.staticFriction = scaledDesiredDirectionRelativeToTransform == Vector3.zero ? 1 : 0;
+            
+            // try to counteract velocity to move in the desired dir
+            Vector3 desiredVelocityChangeDirectionRelativeToTransform =
+                (scaledDesiredDirectionRelativeToTransform * movementSpeed - horizontalVelRelativeToTransform).normalized * scaledDesiredDirectionRelativeToTransform.magnitude;
+            
             // normally, it is the same as the normalised desired direction. If the forward direction is Vector3.Zero, then it is transform.forward
             Vector3 forwardVector;
             Vector3 rightVector;
-            if (scaledDesiredDirectionRelative == Vector3.zero)
+            if (scaledDesiredDirectionRelativeToTransform == Vector3.zero)
             {
-                forwardVector = transform.forward;
-                rightVector = transform.right;
+                var transformCache = transform;
+                forwardVector = transformCache.forward;
+                rightVector = transformCache.right;
             }
             else
             {
-                forwardVector =  scaledDesiredDirectionRelative.normalized;
+                forwardVector =  scaledDesiredDirectionRelativeToTransform.normalized;
                 // a horizontal vector perpendicular to the normalisedDesiredDirectionRelative
                 // rotate 90 degrees
                  rightVector = new Vector3(forwardVector.z, 0, -forwardVector.x);
             }
             
-            // TODO: make it so that it doesn't wiggle when on a slope
+            float velocityRelativeToDesiredDirectionX = Vector3.Dot(forwardVector, horizontalVelRelativeToTransform);
+            // float velocityRelativeToDesiredDirectionZ = Vector3.Dot(rightVector, horizontalVelRelativeToTransform);
 
-            float velocityRelativeToDesiredDirectionX = Vector3.Dot(forwardVector, horizontalVelRelative);
-            float velocityRelativeToDesiredDirectionZ = Vector3.Dot(rightVector, horizontalVelRelative);
-            
             // Make sure that we come to stop quickly
-            Vector3 velocityChangeRelative = new Vector3(TweakVelocityChange(scaledDesiredDirectionRelative.x, velocityRelativeToDesiredDirectionX, horizontalVelRelative.x, lastActiveStoppingTime.x, isInAir), 0,TweakVelocityChange(scaledDesiredDirectionRelative.z, velocityRelativeToDesiredDirectionZ, horizontalVelRelative.z, lastActiveStoppingTime.y, isInAir));
+            // NOTE: we are not giving velocityRelativeToDesiredDirectionZ to the function because that doesn't make much sense
+            Vector3 velocityChangeRelative = new Vector3(TweakVelocityChange(desiredVelocityChangeDirectionRelativeToTransform.x, velocityRelativeToDesiredDirectionX, horizontalVelRelativeToTransform.x, lastActiveStoppingTime, isInAir), 0,TweakVelocityChange(desiredVelocityChangeDirectionRelativeToTransform.z, 0, horizontalVelRelativeToTransform.z, 0, isInAir));
 
-            if (velocityRelativeToDesiredDirectionX + velEpsilon < 0) lastActiveStoppingTime.x = Time.fixedTime;
-            if (velocityRelativeToDesiredDirectionZ + velEpsilon < 0) lastActiveStoppingTime.y = Time.fixedTime;
+            // if negligible velocity, assume we are stopped and record that time
+            if (Mathf.Abs(velocityRelativeToDesiredDirectionX) < velEpsilon) lastActiveStoppingTime = Time.fixedTime;
+            // if (Mathf.Abs(velocityRelativeToDesiredDirectionZ) + velEpsilon < 0) lastActiveStoppingTime.y = Time.fixedTime;
             
             Vector3 velocityChange = transform.TransformDirection(velocityChangeRelative);
             
-            // TODO: only when in air and pressing keys, slow down if moving faster than max speed in that direction
-            // TODO: in that case, do not apply that direction at all
-            
             // TODO: a more consistent feel to moving opposite of your velocity - is it not working if not at top v?
-            finalVelocity += velocityChange;
+            newHorizontalVel += velocityChange;
 
             // if travelling at max speed, clamp to it
-            // if (IsVelocityPassingThreshold(movementSpeed * movementSpeed, initHorizontalVel.sqrMagnitude, finalVelocity.sqrMagnitude))
-            // {
-            //     Debug.Log($"Max vel{initHorizontalVel.y}");
-            //     finalVelocity = finalVelocity.normalized * movementSpeed;
-            // }
-            
+            if (IsVelocityPassingThreshold(movementSpeed * movementSpeed, initHorizontalVel.sqrMagnitude, newHorizontalVel.sqrMagnitude))
+            {
+                newHorizontalVel = newHorizontalVel.normalized * movementSpeed;
+            }
+
             // apply the velocity
-            finalVelocity.y = rb.velocity.y;
-            rb.velocity = finalVelocity;
+            Vector3 newVelocity = newHorizontalVel;
+            newVelocity.y = rb.velocity.y;
+            rb.velocity = newVelocity;
 
             // jumping
             if (userInput.Value.isJumping)

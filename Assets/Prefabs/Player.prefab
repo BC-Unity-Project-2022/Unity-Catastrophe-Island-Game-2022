@@ -139,7 +139,7 @@ MonoBehaviour:
   velEpsilon: 0.05
   groundAcceleration: 10
   groundActiveStoppingRate: 5
-  groundPassiveStopping: 40
+  groundPassiveStopping: 30
   fastAccelerationTimeAfterActiveStopping: 0.1
   groundCheckSphereDisplacement: 0.65
   groundCheckSphereRadius: 0.4
