@@ -189,7 +189,6 @@ public class PlayerController : NetworkBehaviour
             
             // TODO: a more consistent feel to moving opposite of your velocity - is it not working if not at top v?
             finalVelocity += velocityChange;
-            Debug.Log(velocityChange);
 
             // if travelling at max speed, clamp to it
             // if (IsVelocityPassingThreshold(movementSpeed * movementSpeed, initHorizontalVel.sqrMagnitude, finalVelocity.sqrMagnitude))
