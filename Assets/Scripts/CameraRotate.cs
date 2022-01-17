@@ -5,6 +5,7 @@ using UnityEngine;
 public class CameraRotate : MonoBehaviour
 {
     private Transform playerTransform;
+    
     public float rotationSpeedX = 10f;
     public float rotationSpeedY = 10f;
     public Transform aimControlTransform;

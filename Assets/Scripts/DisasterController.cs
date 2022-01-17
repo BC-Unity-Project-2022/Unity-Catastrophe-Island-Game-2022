@@ -1,6 +1,8 @@
 using System.Collections;
 using System;
 using UnityEngine;
+using TMPro;
+using System.Threading.Tasks;
 
 struct DisasterInfo
 {
@@ -15,6 +17,13 @@ public enum DisasterName
     Sinkhole
 }
 
+public enum Article
+{
+    A,
+    An,
+    The
+}
+
 public class DisasterController : MonoBehaviour
 {
     [SerializeField] private int minTimeBetweenDisasters;
@@ -23,6 +32,7 @@ public class DisasterController : MonoBehaviour
     [SerializeField] private float maxStrength;
     [SerializeField] private int minExecutionTime;
     [SerializeField] private int maxExecutionTime;
+    [SerializeField] private TMP_Text displayText;
 
     DisasterInfo disasterInfo = new DisasterInfo();
 
@@ -53,17 +63,29 @@ public class DisasterController : MonoBehaviour
     void Start()
     {
         disasterInfo.nextDisaster = GetRandomDisaster();
-        StartCoroutine(RunDisasterClock());
+        RunDisasterClock();
     }
-    IEnumerator RunDisasterClock()
+
+    private async void RunDisasterClock()
     {
         while (true)
         {
             disasterInfo.currentDisaster = disasterInfo.nextDisaster;
             disasterInfo.nextDisaster = GetRandomDisaster();
-            disasterInfo.currentDisaster.ExecuteDisaster();
 
-            yield return new WaitForSeconds(RandomInteger(minTimeBetweenDisasters, maxTimeBetweenDisasters));
+            int waitTime = RandomInteger(minTimeBetweenDisasters, maxTimeBetweenDisasters);
+            await DisplayIncomingText(waitTime);
+
+            await disasterInfo.currentDisaster.ExecuteDisaster();
+        }
+    }
+
+    async private Task DisplayIncomingText(int waitTime)
+    {
+        for (int secondsLeft = waitTime; secondsLeft >= 0; secondsLeft--)
+        {
+            displayText.text = $"{disasterInfo.currentDisaster.article} {disasterInfo.currentDisaster.name} is imminent in {secondsLeft}s!\nWatch out!";
+            await Task.Delay(1000);
         }
     }
 
@@ -72,29 +94,46 @@ public class DisasterController : MonoBehaviour
         float strength = RandomFloat(minStrength, maxStrength);
         int executionTime = RandomInteger(minExecutionTime, maxExecutionTime);
         DisasterName disasterName = RandomEnum<DisasterName>();
+        
+        Article article;
+        if ("aeiou".IndexOf(disasterName.ToString().ToLower()[0]) >= 0)
+        {
+            article = Article.An;
+        } else
+        {
+            article = Article.A;
+        }
 
-        Disaster disaster = new Disaster(disasterName, strength, executionTime);
+        Disaster disaster = new Disaster(article, disasterName, strength, executionTime, displayText);
         return disaster;
     }
 }
 
 public class Disaster
 {
-    string name;
-    float strength;
-    int executionLength;
+    public string name;
+    public float strength;
+    public int executionLength;
+    public string article;
+    
+    TMP_Text displayText;
 
-    public Disaster(DisasterName name, float strength, int executionLength)
+    public Disaster(Article article, DisasterName name, float strength, int executionLength, TMP_Text displayText)
     {
         this.name = name.ToString();
         this.strength = strength;
         this.executionLength = executionLength;
+        this.article = article.ToString();
+        this.displayText = displayText;
     }
 
-    public void ExecuteDisaster()
+    async public Task ExecuteDisaster()
     {
-        // Run the disaster
-        Debug.Log($"Running Disaster '{name}', which has a strength of {strength} and an length of {executionLength}s");
+        displayText.text = $"{article} {name} is active!\nStrength: {strength}\tLength: {executionLength}s";
+
+        // Spawn physical animation here
+
+        await Task.Delay(executionLength * 1000);
+
     }
 }
-
