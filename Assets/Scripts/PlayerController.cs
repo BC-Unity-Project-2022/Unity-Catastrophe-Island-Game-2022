@@ -1,9 +1,12 @@
 using System;
 using System.Numerics;
+using Newtonsoft.Json.Linq;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
+using UnityEngine.Assertions.Must;
 using UnityEngine.Purchasing.Extension;
+using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
 struct UserInput {
@@ -21,21 +24,18 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float jumpCooldownSecs = 0.6f;
     
     public float velEpsilon = 0.05f; 
-    public float inputEpsilon = 0.05f; 
     
-     public float highSpeedSlowingDownRate = 3f; 
-     
      public float groundAcceleration = 30.0f;
      public float groundActiveStoppingRate = 4.0f;
-     public float groundFrictionRate = 10.0f;
+     public float groundPassiveStopping = 1.0f;
+     
+     public float fastAccelerationTimeAfterActiveStopping = 1.0f;
 
      public float groundCheckSphereDisplacement = 1.0f;
      public float groundCheckSphereRadius = 1.0f;
 
      [Range(0.0f, 1.0f)]
      public float airAccelerationFraction = 0.5f;
-     [Range(0.0f, 1.0f)]
-     public float airFrictionRateFraction = 0.5f;
      
      public float coyoteTime = 0.5f;
 
@@ -47,6 +47,7 @@ public class PlayerController : NetworkBehaviour
     private float previousJumpSecs;
 
     private Rigidbody rb;
+    private Vector2 lastActiveStoppingTime;
 
     private void Awake()
     {
@@ -94,87 +95,116 @@ public class PlayerController : NetworkBehaviour
         return isOnTheFloor;
     }
 
-    private float TweakMovementVelocity(float input, float vel, bool isInAir)
+    private bool IsVelocityPassingThreshold(float threshold, float before, float after)
     {
-        if (Mathf.Abs(input) <= inputEpsilon)
-            return 0;
-        if (Mathf.Abs(vel) <= velEpsilon)
-            return input;
-        if (Mathf.Sign(input) == Mathf.Sign(vel))
-            return input;
-        
-        // trying to stop quickly
-        if (isInAir) return input;
-
-        return input * groundActiveStoppingRate;
+        return after + velEpsilon > threshold && before <= threshold + velEpsilon;
     }
-
-    private float CalculateFriction(float friction, float vel)
+    
+    // make the movement feel nicer
+    private float TweakVelocityChange(float input, float velRelativeToInput, float velRelativeToTransform, float lastActiveStoppingTime, bool isInAir)
     {
-        float proposedNewVel = vel - Mathf.Sign(vel) * friction * Time.fixedDeltaTime;
-        if (Mathf.Sign(proposedNewVel) == Mathf.Sign(vel)) return proposedNewVel;
+        float acceleration = groundAcceleration;
+        if (isInAir)
+            acceleration *= airAccelerationFraction;
         
-        return 0;
+        // if no input in this direction, but still moving there
+        if (!isInAir && input == 0)
+        {
+            // Mathf.sign(0) == 1
+            if (Mathf.Abs(velRelativeToTransform) < velEpsilon) return 0;
+            
+            float ret = -Mathf.Sign(velRelativeToTransform) * groundPassiveStopping * Time.fixedDeltaTime;
+            // do not overshoot
+            if (IsVelocityPassingThreshold(0, velRelativeToTransform, velRelativeToTransform + ret))
+            {
+                return -velRelativeToTransform;
+            }
+            return ret;
+        }
+        
+        // increase the speed if moving in the opposite direction
+        if (velRelativeToInput < 0 || lastActiveStoppingTime + fastAccelerationTimeAfterActiveStopping >= Time.fixedTime)
+        {
+            input *= groundActiveStoppingRate;
+        }
+        
+        return input * acceleration * Time.fixedDeltaTime;
     }
 
     private void FixedUpdate()
     {
         if (IsServer && IsOwner)
         {
-            bool isInAir = !isOnTheFloor();
-            bool isInAirWithCoyoteTime = isInAir && lastTimeOnGround + coyoteTime < Time.fixedTime;
-            
-            float acceleration = groundAcceleration;
-            float frictionRate = groundFrictionRate;
-            if (isInAirWithCoyoteTime)
-            {
-                acceleration *= airAccelerationFraction;
-                frictionRate *= airFrictionRateFraction;
-            }
+            bool isInAir = !isOnTheFloor() && (lastTimeOnGround + coyoteTime < Time.fixedTime);
             
             Vector3 initHorizontalVel = rb.velocity;
-            Vector3 finalVelocity = rb.velocity;
+            Vector3 finalVelocity = initHorizontalVel;
             initHorizontalVel.y = 0;
 
             // "relative" means relative to transform
             Vector3 horizontalVelRelative = transform.InverseTransformDirection(initHorizontalVel);
             Vector3 scaledDesiredDirectionRelative = userInput.Value.DesiredDirection;
+            
             scaledDesiredDirectionRelative.y = 0;
+
             if (scaledDesiredDirectionRelative.sqrMagnitude > 1)
             {
                 scaledDesiredDirectionRelative.Normalize();
             }
+
+            scaledDesiredDirectionRelative =
+                (scaledDesiredDirectionRelative * movementSpeed - horizontalVelRelative).normalized * scaledDesiredDirectionRelative.magnitude;
+
+            // normally, it is the same as the normalised desired direction. If the forward direction is Vector3.Zero, then it is transform.forward
+            Vector3 forwardVector;
+            Vector3 rightVector;
+            if (scaledDesiredDirectionRelative == Vector3.zero)
+            {
+                forwardVector = transform.forward;
+                rightVector = transform.right;
+            }
+            else
+            {
+                forwardVector =  scaledDesiredDirectionRelative.normalized;
+                // a horizontal vector perpendicular to the normalisedDesiredDirectionRelative
+                // rotate 90 degrees
+                 rightVector = new Vector3(forwardVector.z, 0, -forwardVector.x);
+            }
             
-            scaledDesiredDirectionRelative = new Vector3(TweakMovementVelocity(scaledDesiredDirectionRelative.x, horizontalVelRelative.x, isInAirWithCoyoteTime), 0,TweakMovementVelocity(scaledDesiredDirectionRelative.z, horizontalVelRelative.z, isInAirWithCoyoteTime));
+            // TODO: make it so that it doesn't wiggle when on a slope
+
+            float velocityRelativeToDesiredDirectionX = Vector3.Dot(forwardVector, horizontalVelRelative);
+            float velocityRelativeToDesiredDirectionZ = Vector3.Dot(rightVector, horizontalVelRelative);
             
-            Vector3 velocityChangeRelative = scaledDesiredDirectionRelative * acceleration;
+            // Make sure that we come to stop quickly
+            Vector3 velocityChangeRelative = new Vector3(TweakVelocityChange(scaledDesiredDirectionRelative.x, velocityRelativeToDesiredDirectionX, horizontalVelRelative.x, lastActiveStoppingTime.x, isInAir), 0,TweakVelocityChange(scaledDesiredDirectionRelative.z, velocityRelativeToDesiredDirectionZ, horizontalVelRelative.z, lastActiveStoppingTime.y, isInAir));
+
+            if (velocityRelativeToDesiredDirectionX + velEpsilon < 0) lastActiveStoppingTime.x = Time.fixedTime;
+            if (velocityRelativeToDesiredDirectionZ + velEpsilon < 0) lastActiveStoppingTime.y = Time.fixedTime;
+            
             Vector3 velocityChange = transform.TransformDirection(velocityChangeRelative);
             
             // TODO: only when in air and pressing keys, slow down if moving faster than max speed in that direction
             // TODO: in that case, do not apply that direction at all
             
-            // TODO: do something about not being able to strafe while moving full speed forwards
-            finalVelocity += velocityChange * Time.fixedDeltaTime;
-            // NOTE: slow down if already past the speed limit
-            if (!isInAirWithCoyoteTime)
-            {
-                if (initHorizontalVel.magnitude > movementSpeed)
-                {
-                    finalVelocity = initHorizontalVel.normalized * Mathf.Lerp(initHorizontalVel.magnitude, movementSpeed, highSpeedSlowingDownRate * Time.fixedDeltaTime);
-                }
-            }
+            // TODO: a more consistent feel to moving opposite of your velocity - is it not working if not at top v?
+            finalVelocity += velocityChange;
 
+            // if travelling at max speed, clamp to it
+            // if (IsVelocityPassingThreshold(movementSpeed * movementSpeed, initHorizontalVel.sqrMagnitude, finalVelocity.sqrMagnitude))
+            // {
+            //     Debug.Log($"Max vel{initHorizontalVel.y}");
+            //     finalVelocity = finalVelocity.normalized * movementSpeed;
+            // }
+            
+            // apply the velocity
             finalVelocity.y = rb.velocity.y;
             rb.velocity = finalVelocity;
 
-            // time for drag
-            rb.velocity = new Vector3(CalculateFriction(frictionRate, rb.velocity.x), rb.velocity.y, CalculateFriction(frictionRate, rb.velocity.z));
-            // TODO: drag outside of the air
-
-            // limit the speed
+            // jumping
             if (userInput.Value.isJumping)
             {
-                bool canJump = !isInAirWithCoyoteTime && Time.fixedTime - previousJumpSecs >= jumpCooldownSecs;
+                bool canJump = !isInAir && Time.fixedTime - previousJumpSecs >= jumpCooldownSecs;
                 if (canJump)
                 {
                     // Debug.Log($"Proposed coyote time: {Time.fixedTime - lastTimeOnGround}s");
