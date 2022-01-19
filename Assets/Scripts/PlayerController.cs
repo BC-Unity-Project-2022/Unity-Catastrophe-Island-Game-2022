@@ -1,17 +1,17 @@
-using System;
-using System.Numerics;
-using Newtonsoft.Json.Linq;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
-using UnityEngine.Purchasing.Extension;
-using Vector2 = UnityEngine.Vector2;
 using Vector3 = UnityEngine.Vector3;
 
+struct ColliderShapeParams
+{
+    public float height;
+    public float verticalDisplacement;
+}
 struct UserInput {
     public Vector3 DesiredDirection;
     public bool isJumping;
+    public bool isCrouching;
 }
 
 [RequireComponent(typeof(NetworkRigidbody))]
@@ -21,23 +21,38 @@ public class PlayerController : NetworkBehaviour
 {
     [SerializeField] private float movementSpeed = 1; 
     [SerializeField] private float jumpVelocity = 10f; 
+    [SerializeField] private float jumpCrouchVelocity = 15f; 
     [SerializeField] private float jumpCooldownSecs = 0.6f;
 
-    public float velEpsilon = 0.05f; 
+    [SerializeField] private float velEpsilon = 0.05f; 
 
-    public float groundAcceleration = 30.0f;
-    public float groundActiveStoppingRate = 4.0f;
-    public float groundPassiveStopping = 1.0f;
+    [SerializeField] private float groundAcceleration = 30.0f;
+    [SerializeField] private float groundActiveStoppingRate = 4.0f;
+    [SerializeField] private float groundPassiveStopping = 1.0f;
+    
+    [SerializeField] private float forwardMovementAccelerationMultiplier = 1.5f;
+    [SerializeField] private float forwardMovementMovementSpeedMultiplier = 1.5f;
 
-    public float fastAccelerationTimeAfterActiveStopping = 1.0f;
+    [SerializeField] private float fastAccelerationTimeAfterActiveStopping = 1.0f;
 
-    public float groundCheckSphereDisplacement = 1.0f;
-    public float groundCheckSphereRadius = 1.0f;
+    [SerializeField] private float groundCheckSphereDisplacement = 1.0f;
+    [SerializeField] private float groundCheckSphereRadius = 1.0f;
 
     [Range(0.0f, 1.0f)]
-    public float airAccelerationFraction = 0.5f;
+    [SerializeField] private float airAccelerationFraction = 0.5f;
 
-    public float coyoteTime = 0.5f;
+    [SerializeField] private float coyoteTime = 0.5f;
+    
+    [SerializeField] private float colliderHeight = 2;
+    [SerializeField] private float colliderCrouchHeight = 1;
+
+    [SerializeField] private float crouchSpeedMultiplier = 0.5f;
+    [SerializeField] private float crouchAccelerationMultiplier = 0.5f;
+    
+
+    private bool crouchDisableUntilReleased = false;
+
+    private CapsuleCollider mainCollider;
 
     private float lastTimeOnGround;
 
@@ -51,6 +66,12 @@ public class PlayerController : NetworkBehaviour
 
     private PhysicMaterial physMat;
 
+    private bool isCrouching = false;
+
+    private ColliderShapeParams colliderShapeParams;
+    private int allLayersButPlayers = ~(1 << 6);
+        
+
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
@@ -61,7 +82,8 @@ public class PlayerController : NetworkBehaviour
         physMat.bounceCombine = PhysicMaterialCombine.Minimum;
         physMat.frictionCombine = PhysicMaterialCombine.Minimum;
 
-        GetComponent<CapsuleCollider>().sharedMaterial = physMat;
+        mainCollider = GetComponent<CapsuleCollider>();
+        mainCollider.sharedMaterial = physMat;
     }
 
     void Start()
@@ -74,14 +96,30 @@ public class PlayerController : NetworkBehaviour
                 cameraRotate.SetMainCamera();
                 cameraRotate.SetTarget(gameObject.transform);
             }
+
+            colliderShapeParams = getColliderShapeParams(false, false);
         }
+    }
+
+    private ColliderShapeParams getColliderShapeParams(bool isCrouching, bool isInAir)
+    {
+        var ret = new ColliderShapeParams();
+        if (isCrouching)
+        { 
+            // spawn it in th middle if in air
+            ret.verticalDisplacement= isInAir ? 0 :  (colliderCrouchHeight - colliderHeight) / 2;
+            ret.height = colliderCrouchHeight;
+        }
+        else
+        {
+            ret.height = colliderHeight;
+            ret.verticalDisplacement = 0f;
+        }
+        return ret;
     }
 
     private bool isOnTheFloor()
     {
-        int allLayersButPlayers = 1 << 6;
-        allLayersButPlayers = ~allLayersButPlayers;
-        
         // RaycastHit hit;
         // Does the ray intersect any objects excluding the player layer
         // if (Physics.CheckSphere(transform.position + Vector3.down * groundCheckSphereDisplacement, groundCheckSphereRadius, allLayersButPlayers))
@@ -116,6 +154,8 @@ public class PlayerController : NetworkBehaviour
         float acceleration = groundAcceleration;
         if (isInAir)
             acceleration *= airAccelerationFraction;
+        if (isCrouching)
+            acceleration *= crouchAccelerationMultiplier;
         
         // if no input in this direction, but still moving there
         if (!isInAir && input == 0)
@@ -139,11 +179,47 @@ public class PlayerController : NetworkBehaviour
         return input * acceleration * Time.fixedDeltaTime;
     }
 
+    private void HandleCrouch(bool wantToCrouch, bool isInAir)
+    {
+            if (crouchDisableUntilReleased)
+            {
+                if (wantToCrouch) wantToCrouch = false;
+                else crouchDisableUntilReleased = false;
+            }
+
+            if (isCrouching != wantToCrouch)
+            {
+                // if we want to uncrouch
+                if (isCrouching && !wantToCrouch)
+                {
+                    // TODO: check if we are allowed to uncrouch
+                    // check that the full collider would work
+                    Vector3 position = transform.position;
+
+                    float radius = mainCollider.radius;
+
+                    Vector3 sphereCenterDisplacement = new Vector3(0, colliderHeight / 2 - radius, 0);
+                    
+                    if (!Physics.CheckCapsule(position + sphereCenterDisplacement, position - sphereCenterDisplacement, radius, allLayersButPlayers))
+                        isCrouching = false;
+                }
+                // crouching
+                else
+                    isCrouching = true;
+                colliderShapeParams = getColliderShapeParams(isCrouching, isInAir);
+            }
+            
+            mainCollider.height = colliderShapeParams.height;
+            mainCollider.center = new Vector3(0, colliderShapeParams.verticalDisplacement, 0);
+    }
+
     private void FixedUpdate()
     {
         if (IsServer && IsOwner)
         {
             bool isInAir = !isOnTheFloor() && (lastTimeOnGround + coyoteTime < Time.fixedTime);
+
+            HandleCrouch(userInput.Value.isCrouching, isInAir);
 
             Vector3 initVelocityCache = rb.velocity;
             Vector3 initHorizontalVel = initVelocityCache;
@@ -158,6 +234,9 @@ public class PlayerController : NetworkBehaviour
             if (scaledDesiredDirectionRelativeToTransform.sqrMagnitude > 1)
                 scaledDesiredDirectionRelativeToTransform.Normalize();
 
+            if (scaledDesiredDirectionRelativeToTransform.z > 0)
+                scaledDesiredDirectionRelativeToTransform.z *= forwardMovementAccelerationMultiplier;
+
             // make sure that physics doesn't go wonky on slopes when stationary
             physMat.staticFriction = scaledDesiredDirectionRelativeToTransform == Vector3.zero ? 1 : 0;
             
@@ -167,19 +246,19 @@ public class PlayerController : NetworkBehaviour
             
             // normally, it is the same as the normalised desired direction. If the forward direction is Vector3.Zero, then it is transform.forward
             Vector3 forwardVector;
-            Vector3 rightVector;
+            // Vector3 rightVector;
             if (scaledDesiredDirectionRelativeToTransform == Vector3.zero)
             {
                 var transformCache = transform;
                 forwardVector = transformCache.forward;
-                rightVector = transformCache.right;
+                // rightVector = transformCache.right;
             }
             else
             {
                 forwardVector =  scaledDesiredDirectionRelativeToTransform.normalized;
                 // a horizontal vector perpendicular to the normalisedDesiredDirectionRelative
                 // rotate 90 degrees
-                 rightVector = new Vector3(forwardVector.z, 0, -forwardVector.x);
+                 // rightVector = new Vector3(forwardVector.z, 0, -forwardVector.x);
             }
             
             float velocityRelativeToDesiredDirectionX = Vector3.Dot(forwardVector, horizontalVelRelativeToTransform);
@@ -188,7 +267,7 @@ public class PlayerController : NetworkBehaviour
             // Make sure that we come to stop quickly
             // NOTE: we are not giving velocityRelativeToDesiredDirectionZ to the function because that doesn't make much sense
             Vector3 velocityChangeRelative = new Vector3(TweakVelocityChange(desiredVelocityChangeDirectionRelativeToTransform.x, velocityRelativeToDesiredDirectionX, horizontalVelRelativeToTransform.x, lastActiveStoppingTime, isInAir), 0,TweakVelocityChange(desiredVelocityChangeDirectionRelativeToTransform.z, 0, horizontalVelRelativeToTransform.z, 0, isInAir));
-
+            
             // if negligible velocity, assume we are stopped and record that time
             if (Mathf.Abs(velocityRelativeToDesiredDirectionX) < velEpsilon) lastActiveStoppingTime = Time.fixedTime;
             // if (Mathf.Abs(velocityRelativeToDesiredDirectionZ) + velEpsilon < 0) lastActiveStoppingTime.y = Time.fixedTime;
@@ -199,11 +278,16 @@ public class PlayerController : NetworkBehaviour
             newHorizontalVel += velocityChange;
 
             // if travelling at max speed, clamp to it
-            if (IsVelocityPassingThreshold(movementSpeed * movementSpeed, initHorizontalVel.sqrMagnitude, newHorizontalVel.sqrMagnitude))
-            {
-                newHorizontalVel = newHorizontalVel.normalized * movementSpeed;
-            }
-
+            
+            // make sure that if travelling forward, the max speed is larger
+            float currentMaxMovementSpeed = movementSpeed;
+            if (scaledDesiredDirectionRelativeToTransform.x == 0 && scaledDesiredDirectionRelativeToTransform.z > 0)
+                currentMaxMovementSpeed *= forwardMovementMovementSpeedMultiplier;
+            if (isCrouching) currentMaxMovementSpeed *= crouchSpeedMultiplier;
+            
+            if (IsVelocityPassingThreshold(currentMaxMovementSpeed * currentMaxMovementSpeed, initHorizontalVel.sqrMagnitude, newHorizontalVel.sqrMagnitude))
+                newHorizontalVel = newHorizontalVel.normalized * currentMaxMovementSpeed;
+            
             // apply the velocity
             Vector3 newVelocity = newHorizontalVel;
             newVelocity.y = rb.velocity.y;
@@ -215,6 +299,12 @@ public class PlayerController : NetworkBehaviour
                 bool canJump = !isInAir && Time.fixedTime - previousJumpSecs >= jumpCooldownSecs;
                 if (canJump)
                 {
+                    float thisJumpVelocity = jumpVelocity;
+                    if (isCrouching)
+                    {
+                        thisJumpVelocity = jumpCrouchVelocity;
+                        crouchDisableUntilReleased = true;
+                    }
                     // Debug.Log($"Proposed coyote time: {Time.fixedTime - lastTimeOnGround}s");
                     // jump
                     
@@ -222,12 +312,15 @@ public class PlayerController : NetworkBehaviour
                     lastTimeOnGround = -10;
                     
                     Vector3 vel = rb.velocity;
-                    vel.y = jumpVelocity;
+                    vel.y = thisJumpVelocity;
                     rb.velocity = vel;
                     
                     previousJumpSecs = Time.fixedTime;
+
+                    isInAir = true;
                 }
             }
+            
         }
     }
 
@@ -240,6 +333,7 @@ public class PlayerController : NetworkBehaviour
             c_userInput.DesiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
 
             c_userInput.isJumping = Input.GetButton("Jump");
+            c_userInput.isCrouching = Input.GetKey(KeyCode.LeftShift);
 
             // maybe don't update it every tick?
             userInput.Value = c_userInput;
