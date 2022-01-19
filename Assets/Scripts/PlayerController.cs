@@ -192,7 +192,6 @@ public class PlayerController : NetworkBehaviour
                 // if we want to uncrouch
                 if (isCrouching && !wantToCrouch)
                 {
-                    // TODO: check if we are allowed to uncrouch
                     // check that the full collider would work
                     Vector3 position = transform.position;
 
@@ -217,6 +216,7 @@ public class PlayerController : NetworkBehaviour
     {
         if (IsServer && IsOwner)
         {
+            // TODO: slow down if above target velocity
             bool isInAir = !isOnTheFloor() && (lastTimeOnGround + coyoteTime < Time.fixedTime);
 
             HandleCrouch(userInput.Value.isCrouching, isInAir);
@@ -274,7 +274,6 @@ public class PlayerController : NetworkBehaviour
             
             Vector3 velocityChange = transform.TransformDirection(velocityChangeRelative);
             
-            // TODO: a more consistent feel to moving opposite of your velocity - is it not working if not at top v?
             newHorizontalVel += velocityChange;
 
             // if travelling at max speed, clamp to it
@@ -320,7 +319,6 @@ public class PlayerController : NetworkBehaviour
                     isInAir = true;
                 }
             }
-            
         }
     }
 
