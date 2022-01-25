@@ -69,12 +69,7 @@ public class PlayerController : NetworkBehaviour
     private ColliderShapeParams _colliderShapeParams;
     private int allLayersButPlayers = ~(1 << 6);
 
-    private void OnGUI()
-    {
-        
-    }
-
-    private void Awake()
+    private void OnEnable()
     {
         if (IsClient && IsOwner)
         {
@@ -90,13 +85,6 @@ public class PlayerController : NetworkBehaviour
 
             _mainCollider = GetComponent<CapsuleCollider>();
             _mainCollider.sharedMaterial = _physMat;
-            
-            var cameraRotate = GetComponentInChildren<CameraRotate>();
-            if (cameraRotate != null)
-            {
-                cameraRotate.SetMainCamera();
-                cameraRotate.SetTarget(gameObject.transform);
-            }
 
             _colliderShapeParams = GetColliderShapeParams(false, false);
         }
