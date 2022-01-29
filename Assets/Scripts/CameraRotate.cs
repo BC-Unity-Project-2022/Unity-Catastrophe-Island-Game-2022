@@ -34,16 +34,9 @@ public class CameraRotate : NetworkBehaviour
             virtCam.Priority = localVirtCamPriority;
     }
 
-    private void OnGUI()
-    {
-        if (!IsOwner) return;
-        var text = playerTransform == null ? "null" : playerTransform.position.ToString();
-        GUILayout.Label($"{IsOwner} {text}");
-    }
-
     void FixedUpdate()
     {
-        if (!IsOwner || playerTransform == null) return;
+        if (!IsOwner || !IsClient) return;
         MouseMovementData mouseMovementData = new MouseMovementData()
         {
             h = Input.GetAxis("Mouse X") * rotationSpeedX * Time.deltaTime,
