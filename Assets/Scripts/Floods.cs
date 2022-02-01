@@ -7,33 +7,43 @@ using TMPro;
 
 public class Floods : MonoBehaviour
 {
-    public bool floodIsActive = false;
     public float moveSpeed;
     public int currentExecutionLength;
 
-    [SerializeField] private float endHeight = 28.5f;
+    [SerializeField] private float endDistance = 10f;
 
     private Vector3 startingPosition;
     private Vector3 endingPosition;
     private Vector3 travelDifference;
     private float currentExecutionTimer;
     private float percentageTravelled;
+    private Disaster currentFlood;
+    private bool isActiveBool = false;
 
     private void Start()
     {
         startingPosition = transform.position;
-        endingPosition = transform.position + new Vector3(0, endHeight, 0);
+        endingPosition = transform.position + new Vector3(0, endDistance, 0);
         travelDifference = endingPosition - startingPosition;
     }
 
     private void Update()
     {
-        if (currentExecutionTimer <= currentExecutionLength && floodIsActive)
+        if (currentFlood == null)
+        {
+            isActiveBool = false;
+        } else
+        {
+            isActiveBool = currentFlood.isActive;
+        }
+        if (currentExecutionTimer <= currentExecutionLength && isActiveBool)
         {
             currentExecutionTimer += Time.deltaTime;
             percentageTravelled = currentExecutionTimer / currentExecutionLength;
             transform.position = startingPosition + travelDifference * percentageTravelled;
-        } else if (floodIsActive && transform.position.y >= endingPosition.y)
+        }
+
+        if (isActiveBool && transform.position.y >= endingPosition.y)
         {
             ResetWaterPlane();
         }
@@ -41,17 +51,17 @@ public class Floods : MonoBehaviour
 
     private void ResetWaterPlane()
     {
-        floodIsActive = false;
+        currentFlood.isActive = false;
         transform.position = startingPosition;
+        currentExecutionTimer = 0f;
     }
 
-
-
-    public void TriggerFlood(int executionTime)
+    public void TriggerFlood(Disaster flood, int executionTime)
     {
+        currentFlood = flood;
         currentExecutionLength = executionTime;
         transform.position = startingPosition;
-        floodIsActive = true;
+        currentFlood.isActive = true;
     }
 }
 
@@ -70,6 +80,6 @@ public class Flood : Disaster
 
         Floods floodScript = waterPlane.GetComponent<Floods>();
 
-        floodScript.TriggerFlood(executionLength);
+        floodScript.TriggerFlood(this, executionLength);
     }
 }

@@ -47,7 +47,7 @@ public class DisasterController : MonoBehaviour
     private float lastCountdownTime;
     private int waitTime = 0;
     private int textIteration;
-    private bool isExecutingAction;
+    private bool wasActiveLastFrame;
 
     public static T RandomEnum<T>()
     {
@@ -79,25 +79,30 @@ public class DisasterController : MonoBehaviour
 
         waitTime = RandomInteger(minTimeBetweenDisasters, maxTimeBetweenDisasters);
         textIteration = waitTime;
-
-        isExecutingAction = false;
+        wasActiveLastFrame = false;
     }
 
     private void Update()
     {
-        if (Time.time - waitTime > lastDisasterTime && !isExecutingAction)
-        {
-            isExecutingAction = true;
-            Debug.Log("Ran Disaster");
-            RunDisaster();
-            isExecutingAction = false;
+        if (disasterInfo.currentDisaster.isActive) {
+            wasActiveLastFrame = true;
+            return;
         }
-        else if ((Time.time - lastCountdownTime >= 1 || textIteration == waitTime) && !isExecutingAction)
+        else if (!disasterInfo.currentDisaster.isActive && wasActiveLastFrame)
         {
-            isExecutingAction = true;
-            Debug.Log("Changing Text");
+            wasActiveLastFrame = false;
+            lastDisasterTime = Time.time;
+            waitTime = RandomInteger(minTimeBetweenDisasters, maxTimeBetweenDisasters);
+            textIteration = waitTime;
+        }
+
+        if (Time.time - waitTime - 1 > lastDisasterTime)
+        {
+            RunDisaster();
+        }
+        else if (Time.time - lastCountdownTime >= 1 || textIteration == waitTime)
+        {
             ChangeIncomingText();
-            isExecutingAction = false;
         }
     }
 
@@ -107,10 +112,6 @@ public class DisasterController : MonoBehaviour
         disasterInfo.nextDisaster = GetRandomDisaster();
 
         disasterInfo.currentDisaster.ExecuteDisaster();
-
-        lastDisasterTime = Time.time;
-        waitTime = RandomInteger(minTimeBetweenDisasters, maxTimeBetweenDisasters);
-        textIteration = waitTime;
     }
     
     private void ChangeIncomingText()
@@ -169,6 +170,7 @@ public class Disaster
     public float strength;
     public int executionLength;
     public string article;
+    public bool isActive;
 
     TMP_Text displayText;
 
@@ -179,6 +181,7 @@ public class Disaster
         this.executionLength = executionLength;
         this.article = article.ToString();
         this.displayText = displayText;
+        this.isActive = false;
     }
 
     public virtual void ExecuteDisaster()

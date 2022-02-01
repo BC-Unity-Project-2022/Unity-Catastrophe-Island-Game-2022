@@ -459,8 +459,8 @@ MonoBehaviour:
   maxTimeBetweenDisasters: 10
   minStrength: 1
   maxStrength: 10
-  minExecutionTime: 3
-  maxExecutionTime: 5
+  minExecutionTime: 12
+  maxExecutionTime: 15
   displayText: {fileID: 671968033}
   waterPlane: {fileID: 1279138713}
   tornado: {fileID: 75515477}
@@ -509,10 +509,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9c2c2b2012bce7345a1e3b712d281932, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  floodIsActive: 0
   moveSpeed: 1
-  endHeight: 28.5
   currentExecutionLength: 3
+  endDistance: 10
 --- !u!4 &1307458134 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 862032714736743793, guid: 34e829746dfdffd4a8be70e553966798, type: 3}
