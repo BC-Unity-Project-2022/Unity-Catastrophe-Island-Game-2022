@@ -28,6 +28,7 @@ public class PlayerController : NetworkBehaviour
     [SerializeField] private float jumpCooldownSecs = 0.6f;
 
     [SerializeField] private float velEpsilon = 0.05f; 
+    [SerializeField] private float velocityClampingEpsilon = 0.2f; 
 
     [SerializeField] private float groundAcceleration = 30.0f;
     [SerializeField] private float groundActiveStoppingAccelerationMultiplier = 4.0f;
@@ -135,24 +136,28 @@ public class PlayerController : NetworkBehaviour
         return isOnTheFloor;
     }
 
-    // make the movement feel nicer
-    private float ProposeAccelerationMultiple(float rawInput, bool isInAir, float velRelativeToDesiredDirection, float lastActiveStoppingTime)
+    private bool IsTurning(float velRelativeToDesiredDirection)
     {
-        float acceleration = ProposeAccelerationMultiple(rawInput, isInAir);
+        return velRelativeToDesiredDirection < -velEpsilon;
+    }
+
+    // make the movement feel nicer
+    private float ProposeAccelerationMultiplier(float rawInput, bool isInAir, float velRelativeToDesiredDirection, float lastActiveStoppingTime)
+    {
+        float acceleration = ProposeAccelerationMultiplier(rawInput, isInAir);
         
-        // Debug.Log(velRelativeToDesiredDirection);
         // increase the speed if moving in the opposite direction
-        // if (velRelativeToDesiredDirection < -velEpsilon ||
-        //     lastActiveStoppingTime + fastAccelerationTimeAfterActiveStopping >= Time.fixedTime)
-        // {
-        //     Debug.Log(velRelativeToDesiredDirection);
-        //     acceleration *= groundActiveStoppingAccelerationMultiplier;
-        // }
+        if (IsTurning(velRelativeToDesiredDirection) ||
+            lastActiveStoppingTime + fastAccelerationTimeAfterActiveStopping >= Time.fixedTime
+            )
+        {
+            acceleration *= groundActiveStoppingAccelerationMultiplier;
+        }
 
         return acceleration;
     }
 
-    private float ProposeAccelerationMultiple(float rawInput, bool isInAir)
+    private float ProposeAccelerationMultiplier(float rawInput, bool isInAir)
     {
         float acceleration = groundAcceleration;
         if (isInAir)
@@ -217,8 +222,6 @@ public class PlayerController : NetworkBehaviour
         Vector3 horizontalVelRelativeToTransform = transform.InverseTransformDirection(initHorizontalVel);
 
         // speed up when we are moving forwards
-        // TODO: do not modify this, modify the desired velocity change maybe?
-        // TODO: the player moves faster than crouch speed if slowing down from high speeds
         if (scaledDesiredDirectionRelativeToTransform.z > 0 && Mathf.Abs(scaledDesiredDirectionRelativeToTransform.z) >
             Mathf.Abs(scaledDesiredDirectionRelativeToTransform.x))
             currentMaxMovementSpeed *= forwardMovementMovementSpeedMultiplier;
@@ -226,11 +229,11 @@ public class PlayerController : NetworkBehaviour
         // make sure that physics doesn't go wonky on slopes when stationary
         _physMat.staticFriction = scaledDesiredDirectionRelativeToTransform == Vector3.zero ? 1 : 0;
 
-        Vector3 desiredVelocity = scaledDesiredDirectionRelativeToTransform * currentMaxMovementSpeed;
+        Vector3 desiredVelocityRelative = scaledDesiredDirectionRelativeToTransform * currentMaxMovementSpeed;
         // try to counteract velocity to move in the desired direction
         // "Raw" because we do not take the max velocity into account
         Vector3 desiredVelocityChangeRelativeToTransformRaw =
-            desiredVelocity - horizontalVelRelativeToTransform;
+            desiredVelocityRelative - horizontalVelRelativeToTransform;
         // maximal possible desired velocity change, disregarding the current velocity
         Vector3 maxVelocityChangeRelativeToTransform =
             desiredVelocityChangeRelativeToTransformRaw.normalized * currentMaxMovementSpeed;
@@ -240,53 +243,56 @@ public class PlayerController : NetworkBehaviour
         Vector3 desiredVelocityChange = desiredVelocityChangeRelativeToTransformRaw.normalized * desiredSpeedChange;
 
         // normally, the forward vector is the same as the normalised desired direction. If the forward direction is Vector3.Zero, then it is transform.forward
-        Vector3 forwardVector = scaledDesiredDirectionRelativeToTransform == Vector3.zero
-            ? transform.forward
-            : scaledDesiredDirectionRelativeToTransform.normalized;
-        Vector3 rightVector = new Vector3(forwardVector.z, 0, -forwardVector.x);
 
-        float velocityRelativeToDesiredDirectionZ = Vector3.Dot(forwardVector, horizontalVelRelativeToTransform);
-        float velocityRelativeToDesiredDirectionX = Vector3.Dot(rightVector, horizontalVelRelativeToTransform);
+        // NOTE: do not need desired direction X velocity because we are usually moving in the same axis as desired velocity
+        float velocityRelativeToDesiredDirectionZ = 0f;
+        if (scaledDesiredDirectionRelativeToTransform != Vector3.zero)
+        {
+            Vector3 forwardVector = scaledDesiredDirectionRelativeToTransform.normalized;
+            
+            velocityRelativeToDesiredDirectionZ = Vector3.Dot(forwardVector, horizontalVelRelativeToTransform);
+        }
 
         // Make sure that we come to stop quickly
-        // NOTE: we are not giving velocityRelativeToDesiredDirectionZ to the function because that doesn't make much sense to stop quickly in that direction as the x direction is heavily favoured because we are frequently pressing keys to go in the direction of velocity, not perpendicularly to it.
-        float accelerationMultipleZ = ProposeAccelerationMultiple(
+        float accelerationMultiplierZ = ProposeAccelerationMultiplier(
             scaledDesiredDirectionRelativeToTransform.z,
             isInAir,
             velocityRelativeToDesiredDirectionZ,
             _lastActiveStoppingTime
             );
-        float accelerationMultipleX = ProposeAccelerationMultiple(
+        float accelerationMultiplierX = ProposeAccelerationMultiplier(
             scaledDesiredDirectionRelativeToTransform.x,
             isInAir,
-            velocityRelativeToDesiredDirectionX,
+            velocityRelativeToDesiredDirectionZ,
             _lastActiveStoppingTime
             );
-        float GetDesiredVelocityChangeMultiplier(float desiredVelocityChange)
+        Debug.Log($"{accelerationMultiplierZ} {velocityRelativeToDesiredDirectionZ}");
+        float GetDesiredVelocityChangeMultiplier(float desiredVelocityChangeOnAxis)
         {
-            if (Mathf.Abs(desiredVelocityChange) < velEpsilon) return 0;
-            return Mathf.Sign(desiredVelocityChange);
+            if (Mathf.Abs(desiredVelocityChangeOnAxis) < velEpsilon) return 0;
+            return Mathf.Sign(desiredVelocityChangeOnAxis);
         }
-        float desiredVelocityChangeX = GetDesiredVelocityChangeMultiplier(desiredVelocityChange.x) * accelerationMultipleX;
-        float desiredVelocityChangeZ = GetDesiredVelocityChangeMultiplier(desiredVelocityChange.z) * accelerationMultipleZ;
+        float desiredVelocityChangeX = GetDesiredVelocityChangeMultiplier(desiredVelocityChange.x) * accelerationMultiplierX;
+        float desiredVelocityChangeZ = GetDesiredVelocityChangeMultiplier(desiredVelocityChange.z) * accelerationMultiplierZ;
         
         Vector3 velocityChangeRelative = new Vector3(desiredVelocityChangeX, 0, desiredVelocityChangeZ) * Time.fixedDeltaTime;
         
-        // TODO: clamp so that we don't overshoot
-        // if (velocityChangeRelative.sqrMagnitude > desiredSpeedChange * desiredSpeedChange)
-        //     velocityChangeRelative =
-        //         velocityChangeRelative.normalized * desiredSpeedChange;
+        if (velocityChangeRelative.sqrMagnitude > desiredSpeedChange * desiredSpeedChange)
+            velocityChangeRelative =
+                velocityChangeRelative.normalized * desiredSpeedChange;
 
         // if negligible velocity, assume we are stopped and record that time
-        if (Mathf.Abs(velocityRelativeToDesiredDirectionZ) < velEpsilon) _lastActiveStoppingTime = Time.fixedTime;
+        if (IsTurning(velocityRelativeToDesiredDirectionZ)) _lastActiveStoppingTime = Time.fixedTime;
 
         Vector3 velocityChange = transform.TransformDirection(velocityChangeRelative);
 
         newHorizontalVel += velocityChange;
 
-        // TODO: if travelling at max speed, clamp to it
+        // if travelling close to the optimal velocity, clamp to it
+        if ((desiredVelocityRelative - velocityChangeRelative - horizontalVelRelativeToTransform).sqrMagnitude < velocityClampingEpsilon * velocityClampingEpsilon)
+            newHorizontalVel = transform.TransformDirection(desiredVelocityRelative);
         
-        // apply the velocity
+            // apply the velocity
         Vector3 newVelocity = newHorizontalVel;
         newVelocity.y = _rb.velocity.y;
         _rb.velocity = newVelocity;
@@ -300,8 +306,6 @@ public class PlayerController : NetworkBehaviour
 
     private void HandleMovement(UserInput userInput)
     {
-        // TODO: slow down if above target velocity
-        // TODO: quick stopping not working again
         // get the walking user input
         Vector3 desiredDirectionRelativeToTransform = userInput.DesiredDirection;
         desiredDirectionRelativeToTransform.y = 0;

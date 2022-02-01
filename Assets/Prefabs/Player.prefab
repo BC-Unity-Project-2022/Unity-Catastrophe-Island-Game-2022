@@ -137,8 +137,9 @@ MonoBehaviour:
   jumpCrouchVelocity: 13
   jumpCooldownSecs: 0.6
   velEpsilon: 0.05
+  velocityClampingEpsilon: 0.2
   groundAcceleration: 10
-  groundActiveStoppingAccelerationMultiplier: 10
+  groundActiveStoppingAccelerationMultiplier: 2
   groundPassiveStoppingAccelerationMultiplier: 1.2
   forwardMovementMovementSpeedMultiplier: 1.5
   fastAccelerationTimeAfterActiveStopping: 0.1
