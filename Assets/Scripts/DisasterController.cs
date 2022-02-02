@@ -90,10 +90,7 @@ public class DisasterController : MonoBehaviour
         }
         else if (!disasterInfo.currentDisaster.isActive && wasActiveLastFrame)
         {
-            wasActiveLastFrame = false;
-            lastDisasterTime = Time.time;
-            waitTime = RandomInteger(minTimeBetweenDisasters, maxTimeBetweenDisasters);
-            textIteration = waitTime;
+            EndDisaster();
         }
 
         if (Time.time - waitTime - 1 > lastDisasterTime)
@@ -104,6 +101,15 @@ public class DisasterController : MonoBehaviour
         {
             ChangeIncomingText();
         }
+    }
+
+    private void EndDisaster()
+    {
+        disasterInfo.currentDisaster.EndDisaster();
+        wasActiveLastFrame = false;
+        lastDisasterTime = Time.time;
+        waitTime = RandomInteger(minTimeBetweenDisasters, maxTimeBetweenDisasters);
+        textIteration = waitTime;
     }
 
     private void RunDisaster()
@@ -187,6 +193,11 @@ public class Disaster
     public virtual void ExecuteDisaster()
     {
         displayText.text = $"{article} {name} is active!\nStrength: {strength}\tLength: {executionLength}s";
+    }
+
+    public virtual void EndDisaster()
+    {
+
     }
 }
  

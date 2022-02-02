@@ -455,8 +455,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2a94e9ce1d2563d40ade4960cb160327, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  minTimeBetweenDisasters: 5
-  maxTimeBetweenDisasters: 10
+  minTimeBetweenDisasters: 25
+  maxTimeBetweenDisasters: 35
   minStrength: 1
   maxStrength: 10
   minExecutionTime: 12
@@ -512,6 +512,7 @@ MonoBehaviour:
   moveSpeed: 1
   currentExecutionLength: 3
   endDistance: 10
+  recessionTime: 10
 --- !u!4 &1307458134 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 862032714736743793, guid: 34e829746dfdffd4a8be70e553966798, type: 3}

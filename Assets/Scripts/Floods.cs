@@ -11,14 +11,18 @@ public class Floods : MonoBehaviour
     public int currentExecutionLength;
 
     [SerializeField] private float endDistance = 10f;
+    [SerializeField] private float recessionTime = 3f;
 
     private Vector3 startingPosition;
     private Vector3 endingPosition;
     private Vector3 travelDifference;
     private float currentExecutionTimer;
+    private float currentRecessionTimer = 0;
     private float percentageTravelled;
+    private float percentageTravelledBack;
     private Disaster currentFlood;
     private bool isActiveBool = false;
+    private bool currentlyReceding = false;
 
     private void Start()
     {
@@ -43,6 +47,13 @@ public class Floods : MonoBehaviour
             transform.position = startingPosition + travelDifference * percentageTravelled;
         }
 
+        if (currentRecessionTimer <= recessionTime && currentlyReceding)
+        {
+            currentRecessionTimer += Time.deltaTime;
+            percentageTravelledBack = currentRecessionTimer / recessionTime;
+            transform.position = endingPosition - travelDifference * percentageTravelledBack;
+        }
+
         if (isActiveBool && transform.position.y >= endingPosition.y)
         {
             ResetWaterPlane();
@@ -51,9 +62,9 @@ public class Floods : MonoBehaviour
 
     private void ResetWaterPlane()
     {
-        currentFlood.isActive = false;
-        transform.position = startingPosition;
         currentExecutionTimer = 0f;
+        currentRecessionTimer = 0f;
+        currentFlood.isActive = false;
     }
 
     public void TriggerFlood(Disaster flood, int executionTime)
@@ -62,6 +73,11 @@ public class Floods : MonoBehaviour
         currentExecutionLength = executionTime;
         transform.position = startingPosition;
         currentFlood.isActive = true;
+    }
+
+    public void Recede()
+    {
+        currentlyReceding = true;
     }
 }
 
@@ -76,10 +92,19 @@ public class Flood : Disaster
 
     public override void ExecuteDisaster()
     {
-        base.ExecuteDisaster();  // Execute Base Class Execution Method
+        base.ExecuteDisaster();
 
         Floods floodScript = waterPlane.GetComponent<Floods>();
 
         floodScript.TriggerFlood(this, executionLength);
+    }
+
+    public override void EndDisaster()
+    {
+        base.EndDisaster();  // Execute Base Class Ending Method
+
+        Floods floodScript = waterPlane.GetComponent<Floods>();
+
+        floodScript.Recede();
     }
 }
