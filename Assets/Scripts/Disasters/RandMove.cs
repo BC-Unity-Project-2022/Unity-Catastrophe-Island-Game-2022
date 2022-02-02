@@ -24,10 +24,14 @@ public class RandMove : MonoBehaviour
     private float movedX;
     private float movedZ;
 
+
+
     // Update is called once per frame
     void Update()
     {
 
+        
+        //Y coordinate
         Vector3 pos = transform.position;
         pos.y = Terrain.activeTerrain.SampleHeight(transform.position);
 
@@ -44,6 +48,7 @@ public class RandMove : MonoBehaviour
             newX = this.transform.position.x + frameX;
             newZ = this.transform.position.z + frameZ;
 
+            //Y coordinate
             transform.position = pos;
 
             if (Mathf.Abs(movedZ) >= Mathf.Abs(moveX) || Mathf.Abs(movedZ) >= Mathf.Abs(moveZ))
