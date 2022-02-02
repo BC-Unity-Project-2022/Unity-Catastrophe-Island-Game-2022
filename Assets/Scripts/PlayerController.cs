@@ -266,7 +266,6 @@ public class PlayerController : NetworkBehaviour
             velocityRelativeToDesiredDirectionZ,
             _lastActiveStoppingTime
             );
-        Debug.Log($"{accelerationMultiplierZ} {velocityRelativeToDesiredDirectionZ}");
         float GetDesiredVelocityChangeMultiplier(float desiredVelocityChangeOnAxis)
         {
             if (Mathf.Abs(desiredVelocityChangeOnAxis) < velEpsilon) return 0;
@@ -313,7 +312,7 @@ public class PlayerController : NetworkBehaviour
         if (desiredDirectionRelativeToTransform.sqrMagnitude > 1)
             desiredDirectionRelativeToTransform.Normalize();
 
-        bool isInAir = !isOnTheFloor() && (_lastTimeOnGround + coyoteTime < Time.fixedTime);
+        bool isInAir = !isOnTheFloor() && _lastTimeOnGround + coyoteTime < Time.fixedTime;
 
         HandleCrouch(userInput.isCrouching, isInAir);
         HandleWalking(desiredDirectionRelativeToTransform, isInAir);

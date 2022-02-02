@@ -1,6 +1,7 @@
 using System;
 using Cinemachine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 struct MouseMovementData
@@ -14,6 +15,7 @@ struct MouseMovementData
     }
 }
 
+[RequireComponent(typeof(NetworkTransform))]
 public class CameraRotate : NetworkBehaviour
 {
     public Transform playerTransform;
@@ -48,6 +50,7 @@ public class CameraRotate : NetworkBehaviour
             // var cube = GameObject.CreatePrimitive(PrimitiveType.Cube); 
             // cube.transform.position = new Vector3(0, 0.5f, 0);
         }
+
         if (IsServer) ApplyRotation(mouseMovementData);
         else ApplyRotationServerRpc(mouseMovementData);
     }
