@@ -132,20 +132,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c3e36e4ba58b87c42bd0ac5892b7add0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  movementSpeed: 7
+  baseMovementSpeed: 7
   jumpVelocity: 10
   jumpCrouchVelocity: 13
   jumpCooldownSecs: 0.6
   velEpsilon: 0.05
+  velocityClampingEpsilon: 0.2
   groundAcceleration: 10
-  groundActiveStoppingRate: 5
-  groundPassiveStopping: 30
-  forwardMovementAccelerationMultiplier: 1.5
+  groundActiveStoppingAccelerationMultiplier: 2
+  groundPassiveStoppingAccelerationMultiplier: 1.2
   forwardMovementMovementSpeedMultiplier: 1.5
   fastAccelerationTimeAfterActiveStopping: 0.1
   groundCheckSphereDisplacement: 0.65
   groundCheckSphereRadius: 0.4
-  airAccelerationFraction: 0.5
+  airAccelerationMultiplier: 0.5
   coyoteTime: 0.07
   colliderHeight: 2
   colliderCrouchHeight: 1
@@ -430,6 +430,7 @@ GameObject:
   m_Component:
   - component: {fileID: 5203790261938259130}
   - component: {fileID: 1248259295427705409}
+  - component: {fileID: 4057885756397568914}
   m_Layer: 6
   m_Name: AimController
   m_TagString: Untagged
@@ -470,3 +471,30 @@ MonoBehaviour:
   rotationSpeedY: 300
   maxLookUpRotation: 85
   minLookDownRotation: -85
+--- !u!114 &4057885756397568914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8714198681685729951}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  SyncPositionX: 1
+  SyncPositionY: 1
+  SyncPositionZ: 1
+  SyncRotAngleX: 1
+  SyncRotAngleY: 1
+  SyncRotAngleZ: 1
+  SyncScaleX: 1
+  SyncScaleY: 1
+  SyncScaleZ: 1
+  PositionThreshold: 0.001
+  RotAngleThreshold: 0.01
+  ScaleThreshold: 0.01
+  InLocalSpace: 0
+  Interpolate: 1
+  CanCommitToTransform: 0
