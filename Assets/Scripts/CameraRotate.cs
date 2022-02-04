@@ -1,45 +1,79 @@
+using System;
+using Cinemachine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
-[RequireComponent(typeof(Camera))]
-public class CameraRotate : MonoBehaviour
+struct MouseMovementData
 {
-    private Transform playerTransform;
+    public float h;
+    public float v;
+
+    public override string ToString()
+    {
+        return $"h: {h}, v: {v}";
+    }
+}
+
+[RequireComponent(typeof(NetworkTransform))]
+public class CameraRotate : NetworkBehaviour
+{
+    public Transform playerTransform;
+
+    public CinemachineVirtualCamera virtCam;
+    public int localVirtCamPriority = 10;
     
     public float rotationSpeedX = 10f;
     public float rotationSpeedY = 10f;
-    public Transform aimControlTransform;
 
     public float maxLookUpRotation = 85;
     public float minLookDownRotation = -85;
 
-    void Update()
+    private void Start()
     {
-        if (playerTransform == null) return;
-        float h = Input.GetAxis("Mouse X") * rotationSpeedX * Time.deltaTime;
-        float v = -Input.GetAxis("Mouse Y") * rotationSpeedY * Time.deltaTime; 
+        // make sure that the camera is focused on the local player
+        if (IsClient && IsOwner)
+            virtCam.Priority = localVirtCamPriority;
+    }
+
+    void FixedUpdate()
+    {
+        if (!IsOwner || !IsClient) return;
+        MouseMovementData mouseMovementData = new MouseMovementData()
+        {
+            h = Input.GetAxis("Mouse X") * rotationSpeedX * Time.deltaTime,
+            v = -Input.GetAxis("Mouse Y") * rotationSpeedY * Time.deltaTime
+        };
         
-        Quaternion hQuaternion = Quaternion.AngleAxis(h, Vector3.up);
+        if (Input.GetButton("Jump"))
+        {
+            // var cube = GameObject.CreatePrimitive(PrimitiveType.Cube); 
+            // cube.transform.position = new Vector3(0, 0.5f, 0);
+        }
+
+        if (IsServer) ApplyRotation(mouseMovementData);
+        else ApplyRotationServerRpc(mouseMovementData);
+    }
+
+    [ServerRpc]
+    private void ApplyRotationServerRpc(MouseMovementData mouseMovementData)
+    {
+        ApplyRotation(mouseMovementData);
+    }
+    
+    private void ApplyRotation(MouseMovementData mouseMovementData)
+    {
+        Quaternion hQuaternion = Quaternion.AngleAxis(mouseMovementData.h, Vector3.up);
         
         playerTransform.rotation *= hQuaternion;
         
-        Vector3 oldAimControlTransformRotation = aimControlTransform.rotation.eulerAngles;
+        Vector3 oldAimControlTransformRotation = transform.rotation.eulerAngles;
 
-        float newRotX = oldAimControlTransformRotation.x + v;
+        float newRotX = oldAimControlTransformRotation.x + mouseMovementData.v;
         // deal with the angles resetting to 0<= x < 360
         if (newRotX > 180) newRotX = newRotX - 360;
         oldAimControlTransformRotation.x = Mathf.Clamp(newRotX, minLookDownRotation, maxLookUpRotation);
         
-        aimControlTransform.rotation = Quaternion.Euler(oldAimControlTransformRotation);
-    }
-
-    public void SetTarget(Transform followTarget)
-    {
-        playerTransform = followTarget;
-    }
-
-    public void SetMainCamera()
-    {
-        GetComponent<Camera>().enabled = true;
+        transform.rotation = Quaternion.Euler(oldAimControlTransformRotation);
     }
 }

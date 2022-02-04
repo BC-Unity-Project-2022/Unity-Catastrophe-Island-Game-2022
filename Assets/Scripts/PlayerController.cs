@@ -1,17 +1,20 @@
 using System;
-using System.Numerics;
-using Newtonsoft.Json.Linq;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
-using UnityEngine.Assertions.Must;
-using UnityEngine.Purchasing.Extension;
-using Vector2 = UnityEngine.Vector2;
+using UnityEngine.AI;
+using UnityEngine.Serialization;
 using Vector3 = UnityEngine.Vector3;
 
+struct ColliderShapeParams
+{
+    public float height;
+    public float verticalDisplacement;
+}
 struct UserInput {
     public Vector3 DesiredDirection;
     public bool isJumping;
+    public bool isCrouching;
 }
 
 [RequireComponent(typeof(NetworkRigidbody))]
@@ -19,59 +22,97 @@ struct UserInput {
 [RequireComponent(typeof(NetworkTransform))]
 public class PlayerController : NetworkBehaviour
 {
-    [SerializeField] private float movementSpeed = 1; 
+    [SerializeField] private float baseMovementSpeed = 1;
     [SerializeField] private float jumpVelocity = 10f; 
+    [SerializeField] private float jumpCrouchVelocity = 15f; 
     [SerializeField] private float jumpCooldownSecs = 0.6f;
+
+    [SerializeField] private float velEpsilon = 0.05f; 
+    [SerializeField] private float velocityClampingEpsilon = 0.2f; 
+
+    [SerializeField] private float groundAcceleration = 30.0f;
+    [SerializeField] private float groundActiveStoppingAccelerationMultiplier = 4.0f;
+    [SerializeField] private float groundPassiveStoppingAccelerationMultiplier = 2.0f;
     
-    public float velEpsilon = 0.05f; 
+    [SerializeField] private float forwardMovementMovementSpeedMultiplier = 1.5f;
+
+    [SerializeField] private float fastAccelerationTimeAfterActiveStopping = 1.0f;
+
+    [SerializeField] private float groundCheckSphereDisplacement = 1.0f;
+    [SerializeField] private float groundCheckSphereRadius = 1.0f;
+
+    [Range(0.0f, 1.0f)]
+    [SerializeField] private float airAccelerationMultiplier = 0.5f;
+
+    [SerializeField] private float coyoteTime = 0.5f;
     
-     public float groundAcceleration = 30.0f;
-     public float groundActiveStoppingRate = 4.0f;
-     public float groundPassiveStopping = 1.0f;
-     
-     public float fastAccelerationTimeAfterActiveStopping = 1.0f;
+    [SerializeField] private float colliderHeight = 2;
+    [SerializeField] private float colliderCrouchHeight = 1;
 
-     public float groundCheckSphereDisplacement = 1.0f;
-     public float groundCheckSphereRadius = 1.0f;
+    [Range(0.0f, 1.0f)]
+    [SerializeField] private float crouchSpeedMultiplier = 0.5f;
+    [Range(0.0f, 1.0f)]
+    [SerializeField] private float crouchAccelerationMultiplier = 0.5f;
+    
 
-     [Range(0.0f, 1.0f)]
-     public float airAccelerationFraction = 0.5f;
-     
-     public float coyoteTime = 0.5f;
+    private bool _crouchDisableUntilReleased = false;
 
-     private float lastTimeOnGround;
+    private CapsuleCollider _mainCollider;
 
-     private NetworkVariable<UserInput> userInput =
-        new NetworkVariable<UserInput>(NetworkVariableReadPermission.Everyone);
+    private float _lastTimeOnGround;
 
-    private float previousJumpSecs;
+    private float _previousJumpSecs;
 
-    private Rigidbody rb;
-    private Vector2 lastActiveStoppingTime;
+    private Rigidbody _rb;
+    private float _lastActiveStoppingTime;
 
-    private void Awake()
+    private PhysicMaterial _physMat;
+
+    private bool _isCrouching = false;
+
+    private ColliderShapeParams _colliderShapeParams;
+    private int allLayersButPlayers = ~(1 << 6);
+
+    private void OnEnable()
     {
-        rb = GetComponent<Rigidbody>();
+        if (IsClient && IsOwner)
+        {
+            _rb = GetComponent<Rigidbody>();
+            _physMat = new PhysicMaterial
+            {
+                bounciness = 0,
+                dynamicFriction = 0,
+                staticFriction = 0,
+                bounceCombine = PhysicMaterialCombine.Minimum,
+                frictionCombine = PhysicMaterialCombine.Minimum
+            };
+
+            _mainCollider = GetComponent<CapsuleCollider>();
+            _mainCollider.sharedMaterial = _physMat;
+
+            _colliderShapeParams = GetColliderShapeParams(false, false);
+        }
     }
 
-    void Start()
+    private ColliderShapeParams GetColliderShapeParams(bool useCrouchingCollider, bool isInAir)
     {
-        if (IsServer)
-        {
-            var cameraRotate = GetComponentInChildren<CameraRotate>();
-            if (cameraRotate != null)
-            {
-                cameraRotate.SetMainCamera();
-                cameraRotate.SetTarget(gameObject.transform);
-            }
+        var ret = new ColliderShapeParams();
+        if (useCrouchingCollider)
+        { 
+            // spawn it in th middle if in air
+            ret.verticalDisplacement= isInAir ? 0 :  (colliderCrouchHeight - colliderHeight) / 2;
+            ret.height = colliderCrouchHeight;
         }
+        else
+        {
+            ret.height = colliderHeight;
+            ret.verticalDisplacement = 0f;
+        }
+        return ret;
     }
 
     private bool isOnTheFloor()
     {
-        int allLayersButPlayers = 1 << 6;
-        allLayersButPlayers = ~allLayersButPlayers;
-        
         // RaycastHit hit;
         // Does the ray intersect any objects excluding the player layer
         // if (Physics.CheckSphere(transform.position + Vector3.down * groundCheckSphereDisplacement, groundCheckSphereRadius, allLayersButPlayers))
@@ -90,151 +131,237 @@ public class PlayerController : NetworkBehaviour
         // TODO: better ground detection and slopes
 
         bool isOnTheFloor = Physics.CheckSphere(transform.position + Vector3.down * groundCheckSphereDisplacement, groundCheckSphereRadius, allLayersButPlayers);
-        if (isOnTheFloor) lastTimeOnGround = Time.fixedTime;
+        if (isOnTheFloor) _lastTimeOnGround = Time.fixedTime;
         
         return isOnTheFloor;
     }
 
-    private bool IsVelocityPassingThreshold(float threshold, float before, float after)
+    private bool IsTurning(float velRelativeToDesiredDirection)
     {
-        return after + velEpsilon > threshold && before <= threshold + velEpsilon;
+        return velRelativeToDesiredDirection < -velEpsilon;
     }
-    
+
     // make the movement feel nicer
-    private float TweakVelocityChange(float input, float velRelativeToInput, float velRelativeToTransform, float lastActiveStoppingTime, bool isInAir)
+    private float ProposeAccelerationMultiplier(float rawInput, bool isInAir, float velRelativeToDesiredDirection, float lastActiveStoppingTime)
+    {
+        float acceleration = ProposeAccelerationMultiplier(rawInput, isInAir);
+        
+        // increase the speed if moving in the opposite direction
+        if (IsTurning(velRelativeToDesiredDirection) ||
+            lastActiveStoppingTime + fastAccelerationTimeAfterActiveStopping >= Time.fixedTime
+            )
+        {
+            acceleration *= groundActiveStoppingAccelerationMultiplier;
+        }
+
+        return acceleration;
+    }
+
+    private float ProposeAccelerationMultiplier(float rawInput, bool isInAir)
     {
         float acceleration = groundAcceleration;
         if (isInAir)
-            acceleration *= airAccelerationFraction;
+            acceleration *= airAccelerationMultiplier;
+        if (_isCrouching)
+            acceleration *= crouchAccelerationMultiplier;
         
-        // if no input in this direction, but still moving there
-        if (!isInAir && input == 0)
-        {
-            // Mathf.sign(0) == 1
-            if (Mathf.Abs(velRelativeToTransform) < velEpsilon) return 0;
-            
-            float ret = -Mathf.Sign(velRelativeToTransform) * groundPassiveStopping * Time.fixedDeltaTime;
-            // do not overshoot
-            if (IsVelocityPassingThreshold(0, velRelativeToTransform, velRelativeToTransform + ret))
+        // if the velocity is non-zero, but we want to stop
+        if (!isInAir && rawInput == 0)
+            acceleration *= groundPassiveStoppingAccelerationMultiplier;
+        
+        return acceleration;
+    }
+
+    private bool HandleCrouch(bool wantToCrouch, bool isInAir)
+    {
+            if (_crouchDisableUntilReleased)
             {
-                return -velRelativeToTransform;
+                if (wantToCrouch) wantToCrouch = false;
+                else _crouchDisableUntilReleased = false;
             }
-            return ret;
-        }
+
+            if (_isCrouching != wantToCrouch)
+            {
+                // if we want to uncrouch
+                if (_isCrouching && !wantToCrouch)
+                {
+                    // check that the full collider would work
+                    Vector3 position = transform.position;
+
+                    float radius = _mainCollider.radius;
+
+                    Vector3 sphereCenterDisplacement = new Vector3(0, colliderHeight / 2 - radius, 0);
+                    
+                    if (!Physics.CheckCapsule(position + sphereCenterDisplacement, position - sphereCenterDisplacement, radius, allLayersButPlayers))
+                        _isCrouching = false;
+                }
+                // crouching
+                else
+                    _isCrouching = true;
+                _colliderShapeParams = GetColliderShapeParams(_isCrouching, isInAir);
+            }
+            
+            _mainCollider.height = _colliderShapeParams.height;
+            _mainCollider.center = new Vector3(0, _colliderShapeParams.verticalDisplacement, 0);
+            return _isCrouching;
+    }
+
+    private void HandleWalking(Vector3 scaledDesiredDirectionRelativeToTransform, bool isInAir)
+    {
+        //  for scaledDesiredDirectionRelativeToTransform, z represents forwards-backwards and x is left-right
         
-        // increase the speed if moving in the opposite direction
-        if (velRelativeToInput < 0 || lastActiveStoppingTime + fastAccelerationTimeAfterActiveStopping >= Time.fixedTime)
+        
+        float currentMaxMovementSpeed = baseMovementSpeed;
+        // moving while crouching is slower
+        if (_isCrouching) currentMaxMovementSpeed *= crouchSpeedMultiplier;
+
+        Vector3 initHorizontalVel = _rb.velocity;
+        initHorizontalVel.y = 0;
+        Vector3 newHorizontalVel = initHorizontalVel;
+
+        Vector3 horizontalVelRelativeToTransform = transform.InverseTransformDirection(initHorizontalVel);
+
+        // speed up when we are moving forwards
+        if (scaledDesiredDirectionRelativeToTransform.z > 0 && Mathf.Abs(scaledDesiredDirectionRelativeToTransform.z) >
+            Mathf.Abs(scaledDesiredDirectionRelativeToTransform.x))
+            currentMaxMovementSpeed *= forwardMovementMovementSpeedMultiplier;
+
+        // make sure that physics doesn't go wonky on slopes when stationary
+        _physMat.staticFriction = scaledDesiredDirectionRelativeToTransform == Vector3.zero ? 1 : 0;
+
+        Vector3 desiredVelocityRelative = scaledDesiredDirectionRelativeToTransform * currentMaxMovementSpeed;
+        // try to counteract velocity to move in the desired direction
+        // "Raw" because we do not take the max velocity into account
+        Vector3 desiredVelocityChangeRelativeToTransformRaw =
+            desiredVelocityRelative - horizontalVelRelativeToTransform;
+        // maximal possible desired velocity change, disregarding the current velocity
+        Vector3 maxVelocityChangeRelativeToTransform =
+            desiredVelocityChangeRelativeToTransformRaw.normalized * currentMaxMovementSpeed;
+
+        // do not overshoot in terms of velocity
+        float desiredSpeedChange = Mathf.Min(desiredVelocityChangeRelativeToTransformRaw.magnitude, maxVelocityChangeRelativeToTransform.magnitude);
+        Vector3 desiredVelocityChange = desiredVelocityChangeRelativeToTransformRaw.normalized * desiredSpeedChange;
+
+        // normally, the forward vector is the same as the normalised desired direction. If the forward direction is Vector3.Zero, then it is transform.forward
+
+        // NOTE: do not need desired direction X velocity because we are usually moving in the same axis as desired velocity
+        float velocityRelativeToDesiredDirectionZ = 0f;
+        if (scaledDesiredDirectionRelativeToTransform != Vector3.zero)
         {
-            input *= groundActiveStoppingRate;
+            Vector3 forwardVector = scaledDesiredDirectionRelativeToTransform.normalized;
+            
+            velocityRelativeToDesiredDirectionZ = Vector3.Dot(forwardVector, horizontalVelRelativeToTransform);
         }
+
+        // Make sure that we come to stop quickly
+        float accelerationMultiplierZ = ProposeAccelerationMultiplier(
+            scaledDesiredDirectionRelativeToTransform.z,
+            isInAir,
+            velocityRelativeToDesiredDirectionZ,
+            _lastActiveStoppingTime
+            );
+        float accelerationMultiplierX = ProposeAccelerationMultiplier(
+            scaledDesiredDirectionRelativeToTransform.x,
+            isInAir,
+            velocityRelativeToDesiredDirectionZ,
+            _lastActiveStoppingTime
+            );
+        float GetDesiredVelocityChangeMultiplier(float desiredVelocityChangeOnAxis)
+        {
+            if (Mathf.Abs(desiredVelocityChangeOnAxis) < velEpsilon) return 0;
+            return Mathf.Sign(desiredVelocityChangeOnAxis);
+        }
+        float desiredVelocityChangeX = GetDesiredVelocityChangeMultiplier(desiredVelocityChange.x) * accelerationMultiplierX;
+        float desiredVelocityChangeZ = GetDesiredVelocityChangeMultiplier(desiredVelocityChange.z) * accelerationMultiplierZ;
         
-        return input * acceleration * Time.fixedDeltaTime;
+        Vector3 velocityChangeRelative = new Vector3(desiredVelocityChangeX, 0, desiredVelocityChangeZ) * Time.fixedDeltaTime;
+        
+        if (velocityChangeRelative.sqrMagnitude > desiredSpeedChange * desiredSpeedChange)
+            velocityChangeRelative =
+                velocityChangeRelative.normalized * desiredSpeedChange;
+
+        // if negligible velocity, assume we are stopped and record that time
+        if (IsTurning(velocityRelativeToDesiredDirectionZ)) _lastActiveStoppingTime = Time.fixedTime;
+
+        Vector3 velocityChange = transform.TransformDirection(velocityChangeRelative);
+
+        newHorizontalVel += velocityChange;
+
+        // if travelling close to the optimal velocity, clamp to it
+        if ((desiredVelocityRelative - velocityChangeRelative - horizontalVelRelativeToTransform).sqrMagnitude < velocityClampingEpsilon * velocityClampingEpsilon)
+            newHorizontalVel = transform.TransformDirection(desiredVelocityRelative);
+        
+            // apply the velocity
+        Vector3 newVelocity = newHorizontalVel;
+        newVelocity.y = _rb.velocity.y;
+        _rb.velocity = newVelocity;
+    }
+
+    [ServerRpc]
+    private void HandleMovementServerRpc(UserInput userInput)
+    {
+        HandleMovement(userInput);
+    }
+
+    private void HandleMovement(UserInput userInput)
+    {
+        // get the walking user input
+        Vector3 desiredDirectionRelativeToTransform = userInput.DesiredDirection;
+        desiredDirectionRelativeToTransform.y = 0;
+        // put a speed cap as a protection against cheaters
+        if (desiredDirectionRelativeToTransform.sqrMagnitude > 1)
+            desiredDirectionRelativeToTransform.Normalize();
+
+        bool isInAir = !isOnTheFloor() && _lastTimeOnGround + coyoteTime < Time.fixedTime;
+
+        HandleCrouch(userInput.isCrouching, isInAir);
+        HandleWalking(desiredDirectionRelativeToTransform, isInAir);
+
+        // jumping
+        if (userInput.isJumping)
+        {
+            bool canJump = !isInAir && Time.fixedTime - _previousJumpSecs >= jumpCooldownSecs;
+            if (canJump)
+            {
+                float thisJumpVelocity = jumpVelocity;
+                if (_isCrouching)
+                {
+                    thisJumpVelocity = jumpCrouchVelocity;
+                    _crouchDisableUntilReleased = true;
+                }
+                // Debug.Log($"Proposed coyote time: {Time.fixedTime - lastTimeOnGround}s");
+                // jump
+                
+                // disable coyote time
+                _lastTimeOnGround = -10;
+                
+                Vector3 vel = _rb.velocity;
+                vel.y = thisJumpVelocity;
+                _rb.velocity = vel;
+                
+                _previousJumpSecs = Time.fixedTime;
+            }
+        }
     }
 
     private void FixedUpdate()
     {
-        if (IsServer && IsOwner)
+        if (!IsOwner || !IsClient) return;
+        UserInput userInput = new UserInput
         {
-            bool isInAir = !isOnTheFloor() && (lastTimeOnGround + coyoteTime < Time.fixedTime);
-            
-            Vector3 initHorizontalVel = rb.velocity;
-            Vector3 finalVelocity = initHorizontalVel;
-            initHorizontalVel.y = 0;
-
-            // "relative" means relative to transform
-            Vector3 horizontalVelRelative = transform.InverseTransformDirection(initHorizontalVel);
-            Vector3 scaledDesiredDirectionRelative = userInput.Value.DesiredDirection;
-            
-            scaledDesiredDirectionRelative.y = 0;
-
-            if (scaledDesiredDirectionRelative.sqrMagnitude > 1)
-            {
-                scaledDesiredDirectionRelative.Normalize();
-            }
-
-            scaledDesiredDirectionRelative =
-                (scaledDesiredDirectionRelative * movementSpeed - horizontalVelRelative).normalized * scaledDesiredDirectionRelative.magnitude;
-
-            // normally, it is the same as the normalised desired direction. If the forward direction is Vector3.Zero, then it is transform.forward
-            Vector3 forwardVector;
-            Vector3 rightVector;
-            if (scaledDesiredDirectionRelative == Vector3.zero)
-            {
-                forwardVector = transform.forward;
-                rightVector = transform.right;
-            }
-            else
-            {
-                forwardVector =  scaledDesiredDirectionRelative.normalized;
-                // a horizontal vector perpendicular to the normalisedDesiredDirectionRelative
-                // rotate 90 degrees
-                 rightVector = new Vector3(forwardVector.z, 0, -forwardVector.x);
-            }
-            
-            // TODO: make it so that it doesn't wiggle when on a slope
-
-            float velocityRelativeToDesiredDirectionX = Vector3.Dot(forwardVector, horizontalVelRelative);
-            float velocityRelativeToDesiredDirectionZ = Vector3.Dot(rightVector, horizontalVelRelative);
-            
-            // Make sure that we come to stop quickly
-            Vector3 velocityChangeRelative = new Vector3(TweakVelocityChange(scaledDesiredDirectionRelative.x, velocityRelativeToDesiredDirectionX, horizontalVelRelative.x, lastActiveStoppingTime.x, isInAir), 0,TweakVelocityChange(scaledDesiredDirectionRelative.z, velocityRelativeToDesiredDirectionZ, horizontalVelRelative.z, lastActiveStoppingTime.y, isInAir));
-
-            if (velocityRelativeToDesiredDirectionX + velEpsilon < 0) lastActiveStoppingTime.x = Time.fixedTime;
-            if (velocityRelativeToDesiredDirectionZ + velEpsilon < 0) lastActiveStoppingTime.y = Time.fixedTime;
-            
-            Vector3 velocityChange = transform.TransformDirection(velocityChangeRelative);
-            
-            // TODO: only when in air and pressing keys, slow down if moving faster than max speed in that direction
-            // TODO: in that case, do not apply that direction at all
-            
-            // TODO: a more consistent feel to moving opposite of your velocity - is it not working if not at top v?
-            finalVelocity += velocityChange;
-
-            // if travelling at max speed, clamp to it
-            // if (IsVelocityPassingThreshold(movementSpeed * movementSpeed, initHorizontalVel.sqrMagnitude, finalVelocity.sqrMagnitude))
-            // {
-            //     Debug.Log($"Max vel{initHorizontalVel.y}");
-            //     finalVelocity = finalVelocity.normalized * movementSpeed;
-            // }
-            
-            // apply the velocity
-            finalVelocity.y = rb.velocity.y;
-            rb.velocity = finalVelocity;
-
-            // jumping
-            if (userInput.Value.isJumping)
-            {
-                bool canJump = !isInAir && Time.fixedTime - previousJumpSecs >= jumpCooldownSecs;
-                if (canJump)
-                {
-                    // Debug.Log($"Proposed coyote time: {Time.fixedTime - lastTimeOnGround}s");
-                    // jump
-                    
-                    // disable coyote time
-                    lastTimeOnGround = -10;
-                    
-                    Vector3 vel = rb.velocity;
-                    vel.y = jumpVelocity;
-                    rb.velocity = vel;
-                    
-                    previousJumpSecs = Time.fixedTime;
-                }
-            }
-        }
+            DesiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")),
+            isJumping = Input.GetButton("Jump"),
+            isCrouching = Input.GetKey(KeyCode.LeftShift)
+        };
+        
+        if (IsServer) HandleMovement(userInput);
+        else HandleMovementServerRpc(userInput);
     }
 
     void Update()
     {
         if (IsClient)
         {
-            // "c_" stands for "client"
-            UserInput c_userInput = new UserInput();
-            c_userInput.DesiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
-
-            c_userInput.isJumping = Input.GetButton("Jump");
-
-            // maybe don't update it every tick?
-            userInput.Value = c_userInput;
         }
     }
 }
