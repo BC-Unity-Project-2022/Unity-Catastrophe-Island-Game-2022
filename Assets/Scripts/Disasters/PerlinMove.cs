@@ -2,41 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class MainTornado : MonoBehaviour
+public class PerlinMove : MonoBehaviour
 {
-
-
-    public Transform tornadoCenter;
-    public float pullforce;
-    public float refreshRate;
-        
-    private void OnTriggerEnter(Collider other)
-    {
-        if (other.tag == "OJB" && !disabled)
-        {
-            StartCoroutine(pullObject(other, true));
-        }
-    }
-
-    private void OnTriggerExit(Collider other)
-    {
-        if (other.tag == "OJB" && !disabled)
-        {
-            StartCoroutine(pullObject(other, false));
-        }
-    }
-
-    IEnumerator pullObject(Collider x, bool shouldPull)
-    {
-        if (shouldPull && !disabled)
-        {
-            Vector3 ForeDir = tornadoCenter.position - x.transform.position;
-            x.GetComponent<Rigidbody>().AddForce(ForeDir.normalized * pullforce * Time.deltaTime);
-            yield return refreshRate;
-            StartCoroutine(pullObject(x, shouldPull));
-
-        }
-    }
+    
     // Range over which perlin varies.
     float perlinScale = 1.0f;
 
@@ -49,8 +17,6 @@ public class MainTornado : MonoBehaviour
 
     public ParticleSystem ps;
 
-    public bool disabled = false;
-
     void Start()
     {
         var main = ps.main;
@@ -59,11 +25,6 @@ public class MainTornado : MonoBehaviour
 
     void Update()
     {
-        if (disabled)
-        {
-            return;
-        }
-        
         float perlin = perlinScale * Mathf.PerlinNoise(Time.time * xScale, 0.0f);
 
         //Y coordinate
@@ -77,18 +38,16 @@ public class MainTornado : MonoBehaviour
 
         //Move forward
         transform.position += (direction * speed * Time.deltaTime);
-
+       
         transform.position = new Vector3(transform.position.x, pos.y, transform.position.z);
 
         if (transform.position.x > halfMap | transform.position.x < -halfMap)
         {
             ps.Stop(true);
-            disabled = true;
         }
         if (transform.position.z > halfMap | transform.position.z < -halfMap)
         {
             ps.Stop(true);
-            disabled = true;
         }
     }
 }
