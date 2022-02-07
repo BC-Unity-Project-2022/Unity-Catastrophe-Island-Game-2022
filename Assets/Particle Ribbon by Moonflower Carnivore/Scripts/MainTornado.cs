@@ -4,13 +4,15 @@ using UnityEngine;
 
 public class MainTornado : MonoBehaviour
 {
+
+
     public Transform tornadoCenter;
     public float pullforce;
     public float refreshRate;
-
+        
     private void OnTriggerEnter(Collider other)
     {
-        if (other.tag == "OJB")
+        if (other.tag == "OJB" && !disabled)
         {
             StartCoroutine(pullObject(other, true));
         }
@@ -18,7 +20,7 @@ public class MainTornado : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
-        if (other.tag == "OJB")
+        if (other.tag == "OJB" && !disabled)
         {
             StartCoroutine(pullObject(other, false));
         }
@@ -26,7 +28,7 @@ public class MainTornado : MonoBehaviour
 
     IEnumerator pullObject(Collider x, bool shouldPull)
     {
-        if (shouldPull)
+        if (shouldPull && !disabled)
         {
             Vector3 ForeDir = tornadoCenter.position - x.transform.position;
             x.GetComponent<Rigidbody>().AddForce(ForeDir.normalized * pullforce * Time.deltaTime);
@@ -57,6 +59,11 @@ public class MainTornado : MonoBehaviour
 
     void Update()
     {
+        if (disabled)
+        {
+            return;
+        }
+        
         float perlin = perlinScale * Mathf.PerlinNoise(Time.time * xScale, 0.0f);
 
         //Y coordinate

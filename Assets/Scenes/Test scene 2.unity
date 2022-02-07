@@ -563,16 +563,7 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 1124370082, guid: d18380a6098943a4a879b5a0f3826c9d, type: 3}
-      propertyPath: ps
-      value: 
-      objectReference: {fileID: 1495219828}
-    - target: {fileID: 1124370082, guid: d18380a6098943a4a879b5a0f3826c9d, type: 3}
-      propertyPath: disabled
-      value: 0
-      objectReference: {fileID: 0}
-    m_RemovedComponents:
-    - {fileID: 524119205, guid: d18380a6098943a4a879b5a0f3826c9d, type: 3}
+    m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d18380a6098943a4a879b5a0f3826c9d, type: 3}
 --- !u!1 &902152085
 GameObject:
@@ -974,11 +965,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1409235172}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
---- !u!198 &1495219828 stripped
-ParticleSystem:
-  m_CorrespondingSourceObject: {fileID: 19807740, guid: d18380a6098943a4a879b5a0f3826c9d, type: 3}
-  m_PrefabInstance: {fileID: 651566438}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1734434664
 GameObject:
   m_ObjectHideFlags: 0

@@ -1,17 +1,27 @@
 using System;
 using Cinemachine;
 using Unity.Netcode;
+using Unity.Netcode.Components;
 using UnityEngine;
 
 struct MouseMovementData
 {
     public float h;
     public float v;
+
+    public override string ToString()
+    {
+        return $"h: {h}, v: {v}";
+    }
 }
 
+[RequireComponent(typeof(NetworkTransform))]
 public class CameraRotate : NetworkBehaviour
 {
-    private Transform playerTransform;
+    public Transform playerTransform;
+
+    public CinemachineVirtualCamera virtCam;
+    public int localVirtCamPriority = 10;
     
     public float rotationSpeedX = 10f;
     public float rotationSpeedY = 10f;
@@ -19,17 +29,17 @@ public class CameraRotate : NetworkBehaviour
     public float maxLookUpRotation = 85;
     public float minLookDownRotation = -85;
 
-    private void OnGUI()
+    private void Start()
     {
-        if (!IsOwner) return;
-        var text = playerTransform == null ? "null" : playerTransform.position.ToString();
-        GUILayout.Label($"{IsOwner} {text}");
+        // make sure that the camera is focused on the local player
+        if (IsClient && IsOwner)
+            virtCam.Priority = localVirtCamPriority;
     }
 
     void FixedUpdate()
     {
-        if (!IsOwner || playerTransform == null) return;
-        MouseMovementData mouseMovementData = new MouseMovementData
+        if (!IsOwner || !IsClient) return;
+        MouseMovementData mouseMovementData = new MouseMovementData()
         {
             h = Input.GetAxis("Mouse X") * rotationSpeedX * Time.deltaTime,
             v = -Input.GetAxis("Mouse Y") * rotationSpeedY * Time.deltaTime
@@ -40,6 +50,7 @@ public class CameraRotate : NetworkBehaviour
             // var cube = GameObject.CreatePrimitive(PrimitiveType.Cube); 
             // cube.transform.position = new Vector3(0, 0.5f, 0);
         }
+
         if (IsServer) ApplyRotation(mouseMovementData);
         else ApplyRotationServerRpc(mouseMovementData);
     }
@@ -64,20 +75,5 @@ public class CameraRotate : NetworkBehaviour
         oldAimControlTransformRotation.x = Mathf.Clamp(newRotX, minLookDownRotation, maxLookUpRotation);
         
         transform.rotation = Quaternion.Euler(oldAimControlTransformRotation);
-    }
-
-    public void SetTarget(Transform followTarget)
-    {
-        playerTransform = followTarget;
-    }
-
-    public void SetMainCamera()
-    {
-        if (IsClient && IsOwner)
-        {
-            // CinemachineVirtualCamera virtCam = GameObject.Find("Main Camera").GetComponent<CinemachineVirtualCamera>();
-            // if (virtCam != null)
-            //     virtCam.Follow = transform;
-        }
     }
 }
