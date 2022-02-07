@@ -459,8 +459,8 @@ MonoBehaviour:
   maxTimeBetweenDisasters: 35
   minStrength: 1
   maxStrength: 10
-  minExecutionTime: 12
-  maxExecutionTime: 15
+  minExecutionTime: 15
+  maxExecutionTime: 25
   displayText: {fileID: 671968033}
   waterPlane: {fileID: 1279138713}
   tornado: {fileID: 75515477}
@@ -923,7 +923,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 862032714736743793, guid: 34e829746dfdffd4a8be70e553966798, type: 3}
       propertyPath: m_LocalPosition.x
-      value: 0
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 862032714736743793, guid: 34e829746dfdffd4a8be70e553966798, type: 3}
       propertyPath: m_LocalPosition.y
@@ -931,7 +931,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 862032714736743793, guid: 34e829746dfdffd4a8be70e553966798, type: 3}
       propertyPath: m_LocalPosition.z
-      value: 0
+      value: 150
       objectReference: {fileID: 0}
     - target: {fileID: 862032714736743793, guid: 34e829746dfdffd4a8be70e553966798, type: 3}
       propertyPath: m_LocalRotation.w
