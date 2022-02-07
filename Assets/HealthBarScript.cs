@@ -7,7 +7,8 @@ public class HealthBarScript : MonoBehaviour
 {
    
     public Slider slider;
-   
+    private AudioSource source;
+
 
     public void setMaxHealth(int health)
     {
@@ -34,7 +35,10 @@ public class HealthBarScript : MonoBehaviour
 
     private void Update()
     {
-        
+        if (currentHealth < 50)
+        {
+            source.Play(); 
+        }
      
 
         if (currentHealth < 0)
@@ -53,6 +57,8 @@ public class HealthBarScript : MonoBehaviour
     {
         currentHealth = maxHealth;
         // healthbar.setMaxHealth(maxHealth);
+
+        source = GetComponent<AudioSource>();
 
     }
 
