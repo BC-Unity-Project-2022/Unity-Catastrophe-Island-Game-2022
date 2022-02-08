@@ -147,7 +147,6 @@ MonoBehaviour:
   groundCheckSphereRadius: 0.4
   airAccelerationMultiplier: 0.5
   coyoteTime: 0.07
-  colliderHeight: 2
   colliderCrouchHeight: 1
   crouchSpeedMultiplier: 0.5
   crouchAccelerationMultiplier: 0.5

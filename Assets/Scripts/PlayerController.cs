@@ -1,4 +1,5 @@
 using System;
+using Newtonsoft.Json.Bson;
 using Unity.Netcode;
 using Unity.Netcode.Components;
 using UnityEngine;
@@ -8,13 +9,13 @@ using Vector3 = UnityEngine.Vector3;
 
 struct ColliderShapeParams
 {
-    public float height;
-    public float verticalDisplacement;
+    public float Height;
+    public float VerticalDisplacement;
 }
 struct UserInput {
     public Vector3 DesiredDirection;
-    public bool isJumping;
-    public bool isCrouching;
+    public bool IsJumping;
+    public bool IsCrouching;
 }
 
 [RequireComponent(typeof(NetworkRigidbody))]
@@ -46,7 +47,8 @@ public class PlayerController : NetworkBehaviour
 
     [SerializeField] private float coyoteTime = 0.5f;
     
-    [SerializeField] private float colliderHeight = 2;
+    private float _colliderHeight;
+    private float _colliderVerticalDisplacement;
     [SerializeField] private float colliderCrouchHeight = 1;
 
     [Range(0.0f, 1.0f)]
@@ -54,7 +56,6 @@ public class PlayerController : NetworkBehaviour
     [Range(0.0f, 1.0f)]
     [SerializeField] private float crouchAccelerationMultiplier = 0.5f;
     
-
     private bool _crouchDisableUntilReleased = false;
 
     private CapsuleCollider _mainCollider;
@@ -90,6 +91,9 @@ public class PlayerController : NetworkBehaviour
             _mainCollider = GetComponent<CapsuleCollider>();
             _mainCollider.sharedMaterial = _physMat;
 
+            _colliderHeight = _mainCollider.height;
+            _colliderVerticalDisplacement = _mainCollider.center.y;
+            
             _colliderShapeParams = GetColliderShapeParams(false, false);
         }
     }
@@ -100,13 +104,13 @@ public class PlayerController : NetworkBehaviour
         if (useCrouchingCollider)
         { 
             // spawn it in th middle if in air
-            ret.verticalDisplacement= isInAir ? 0 :  (colliderCrouchHeight - colliderHeight) / 2;
-            ret.height = colliderCrouchHeight;
+            ret.VerticalDisplacement = isInAir ? _colliderVerticalDisplacement :  (colliderCrouchHeight - _colliderHeight) / 2;
+            ret.Height = colliderCrouchHeight;
         }
         else
         {
-            ret.height = colliderHeight;
-            ret.verticalDisplacement = 0f;
+            ret.Height = _colliderHeight;
+            ret.VerticalDisplacement = _colliderVerticalDisplacement;
         }
         return ret;
     }
@@ -190,7 +194,7 @@ public class PlayerController : NetworkBehaviour
 
                     float radius = _mainCollider.radius;
 
-                    Vector3 sphereCenterDisplacement = new Vector3(0, colliderHeight / 2 - radius, 0);
+                    Vector3 sphereCenterDisplacement = new Vector3(0, _colliderHeight / 2 - radius, 0);
                     
                     if (!Physics.CheckCapsule(position + sphereCenterDisplacement, position - sphereCenterDisplacement, radius, allLayersButPlayers))
                         _isCrouching = false;
@@ -201,8 +205,8 @@ public class PlayerController : NetworkBehaviour
                 _colliderShapeParams = GetColliderShapeParams(_isCrouching, isInAir);
             }
             
-            _mainCollider.height = _colliderShapeParams.height;
-            _mainCollider.center = new Vector3(0, _colliderShapeParams.verticalDisplacement, 0);
+            _mainCollider.height = _colliderShapeParams.Height;
+            _mainCollider.center = new Vector3(0, _colliderShapeParams.VerticalDisplacement, 0);
             return _isCrouching;
     }
 
@@ -314,11 +318,11 @@ public class PlayerController : NetworkBehaviour
 
         bool isInAir = !isOnTheFloor() && _lastTimeOnGround + coyoteTime < Time.fixedTime;
 
-        HandleCrouch(userInput.isCrouching, isInAir);
+        HandleCrouch(userInput.IsCrouching, isInAir);
         HandleWalking(desiredDirectionRelativeToTransform, isInAir);
 
         // jumping
-        if (userInput.isJumping)
+        if (userInput.IsJumping)
         {
             bool canJump = !isInAir && Time.fixedTime - _previousJumpSecs >= jumpCooldownSecs;
             if (canJump)
@@ -350,18 +354,11 @@ public class PlayerController : NetworkBehaviour
         UserInput userInput = new UserInput
         {
             DesiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")),
-            isJumping = Input.GetButton("Jump"),
-            isCrouching = Input.GetKey(KeyCode.LeftShift)
+            IsJumping = Input.GetButton("Jump"),
+            IsCrouching = Input.GetKey(KeyCode.LeftShift)
         };
         
         if (IsServer) HandleMovement(userInput);
         else HandleMovementServerRpc(userInput);
-    }
-
-    void Update()
-    {
-        if (IsClient)
-        {
-        }
     }
 }
