@@ -12,11 +12,8 @@ GameObject:
   - component: {fileID: 205212082722672691}
   - component: {fileID: 205212082722672690}
   - component: {fileID: 205212082722672689}
-  - component: {fileID: 205212082722672688}
   - component: {fileID: -4332329704790432148}
   - component: {fileID: 4109528134260082484}
-  - component: {fileID: -7520922566635245237}
-  - component: {fileID: 2608733447238255025}
   - component: {fileID: 501196384857290266}
   m_Layer: 6
   m_Name: Player
@@ -105,22 +102,6 @@ CapsuleCollider:
   m_Height: 2
   m_Direction: 1
   m_Center: {x: 0, y: 0, z: 0}
---- !u!114 &205212082722672688
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 205212082722672703}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 951099334
-  AlwaysReplicateAsRoot: 0
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1
 --- !u!114 &-4332329704790432148
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -151,6 +132,7 @@ MonoBehaviour:
   colliderCrouchHeight: 1
   crouchSpeedMultiplier: 0.5
   crouchAccelerationMultiplier: 0.5
+  maxWaterMovementSpeed: 0
 --- !u!54 &4109528134260082484
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -167,45 +149,6 @@ Rigidbody:
   m_Interpolate: 1
   m_Constraints: 112
   m_CollisionDetection: 0
---- !u!114 &-7520922566635245237
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 205212082722672703}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  InLocalSpace: 0
-  Interpolate: 1
-  CanCommitToTransform: 0
---- !u!114 &2608733447238255025
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 205212082722672703}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f6c0be61502bb534f922ebb746851216, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &501196384857290266
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -220,7 +163,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   damageFromOcean: 0
   damagePeriod: 0.1
-  healthBar: {fileID: 0}
+  healthBarPrefab: {fileID: 1825685071426817851, guid: 7ea9874197d2081469b86bc2f3609afc, type: 3}
 --- !u!1 &2848547946773952854
 GameObject:
   m_ObjectHideFlags: 0
@@ -445,7 +388,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5203790261938259130}
   - component: {fileID: 1248259295427705409}
-  - component: {fileID: 4057885756397568914}
   m_Layer: 6
   m_Name: AimController
   m_TagString: Untagged
@@ -486,30 +428,3 @@ MonoBehaviour:
   rotationSpeedY: 300
   maxLookUpRotation: 85
   minLookDownRotation: -85
---- !u!114 &4057885756397568914
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 8714198681685729951}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: e96cb6065543e43c4a752faaa1468eb1, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  SyncPositionX: 1
-  SyncPositionY: 1
-  SyncPositionZ: 1
-  SyncRotAngleX: 1
-  SyncRotAngleY: 1
-  SyncRotAngleZ: 1
-  SyncScaleX: 1
-  SyncScaleY: 1
-  SyncScaleZ: 1
-  PositionThreshold: 0.001
-  RotAngleThreshold: 0.01
-  ScaleThreshold: 0.01
-  InLocalSpace: 0
-  Interpolate: 1
-  CanCommitToTransform: 0

@@ -1,6 +1,4 @@
 using Cinemachine;
-using Unity.Netcode;
-using Unity.Netcode.Components;
 using UnityEngine;
 
 struct MouseMovementData
@@ -14,8 +12,7 @@ struct MouseMovementData
     }
 }
 
-[RequireComponent(typeof(NetworkTransform))]
-public class CameraRotate : NetworkBehaviour
+public class CameraRotate : MonoBehaviour
 {
     public Transform playerTransform;
 
@@ -28,16 +25,8 @@ public class CameraRotate : NetworkBehaviour
     public float maxLookUpRotation = 85;
     public float minLookDownRotation = -85;
 
-    private void Start()
-    {
-        // make sure that the camera is focused on the local player
-        if (IsClient && IsOwner)
-            virtCam.Priority = localVirtCamPriority;
-    }
-
     void FixedUpdate()
     {
-        if (!IsOwner || !IsClient) return;
         MouseMovementData mouseMovementData = new MouseMovementData()
         {
             h = Input.GetAxis("Mouse X") * rotationSpeedX * Time.deltaTime,
@@ -50,15 +39,9 @@ public class CameraRotate : NetworkBehaviour
             // cube.transform.position = new Vector3(0, 0.5f, 0);
         }
 
-        if (IsServer) ApplyRotation(mouseMovementData);
-        else ApplyRotationServerRpc(mouseMovementData);
-    }
-
-    [ServerRpc]
-    private void ApplyRotationServerRpc(MouseMovementData mouseMovementData)
-    {
         ApplyRotation(mouseMovementData);
     }
+
     
     private void ApplyRotation(MouseMovementData mouseMovementData)
     {

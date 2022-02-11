@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -9,8 +10,17 @@ public class PlayerHealthController : MonoBehaviour
     public float damageFromOcean;
     public float damagePeriod = 0.1f;
 
-    public HealthBarScript healthBar;
-    
+    public GameObject healthBarPrefab;
+    private HealthBarScript healthBar;
+
+    private void Awake()
+    {
+        var canvas = FindObjectOfType<Canvas>();
+        var go = Instantiate(healthBarPrefab, canvas.gameObject.transform, true);
+        
+        healthBar = go.GetComponent<HealthBarScript>();
+    }
+
     void Update()
     {
         // Check if the health is below or equal to 0
