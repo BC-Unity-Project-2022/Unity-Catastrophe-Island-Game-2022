@@ -22,7 +22,7 @@ public class TreeHealth : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (gameObject.GetComponent<Rigidbody>() != null)
+        if (gameObject.GetComponent<Rigidbody>() == null)
         {
             if (health <= 0)
             {
