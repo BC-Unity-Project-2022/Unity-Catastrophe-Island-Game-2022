@@ -2,7 +2,6 @@ using System;
 using JetBrains.Annotations;
 using Unity.Netcode;
 using UnityEngine;
-using UnityEngine.Serialization;
 
 public class PersistentPlayer : NetworkBehaviour
 {

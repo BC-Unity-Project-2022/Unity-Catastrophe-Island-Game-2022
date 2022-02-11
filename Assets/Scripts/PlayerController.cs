@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics.SymbolStore;
 using Newtonsoft.Json.Bson;
 using Unity.Netcode;
 using Unity.Netcode.Components;
@@ -56,6 +57,8 @@ public class PlayerController : NetworkBehaviour
     [Range(0.0f, 1.0f)]
     [SerializeField] private float crouchAccelerationMultiplier = 0.5f;
     
+    [SerializeField] private float maxWaterMovementSpeed;
+    
     private bool _crouchDisableUntilReleased = false;
 
     private CapsuleCollider _mainCollider;
@@ -73,6 +76,8 @@ public class PlayerController : NetworkBehaviour
 
     private ColliderShapeParams _colliderShapeParams;
     private int allLayersButPlayers = ~(1 << 6);
+
+    private bool isUnderWater;
 
     private void OnEnable()
     {
@@ -360,5 +365,14 @@ public class PlayerController : NetworkBehaviour
         
         if (IsServer) HandleMovement(userInput);
         else HandleMovementServerRpc(userInput);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Ocean")) isUnderWater = true;
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Ocean")) isUnderWater = false;
     }
 }
