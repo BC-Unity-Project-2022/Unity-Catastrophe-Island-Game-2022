@@ -5,8 +5,9 @@ using UnityEngine;
 public class TreeHealth : MonoBehaviour
 {
     public float health = 100;
-    private bool gameObjectToCheck = false;
 
+
+    
     // Start is called before the first frame update
     void Start()
     {
@@ -21,7 +22,7 @@ public class TreeHealth : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        if (gameObjectToCheck.GetComponent<Rigidbody>() != null)
+        if (gameObject.GetComponent<Rigidbody>() == null)
         {
             if (health <= 0)
             {
