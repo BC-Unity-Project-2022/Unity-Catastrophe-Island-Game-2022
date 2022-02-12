@@ -1,7 +1,6 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 public class PlayerHealthController : MonoBehaviour
 {
@@ -10,8 +9,14 @@ public class PlayerHealthController : MonoBehaviour
     public float damageFromOcean;
     public float damagePeriod = 0.1f;
 
+    public float minFallDamageVerticalVelocity = 15f;
+    public AnimationCurve fallDamageCurve;
+    public float minSpeedForMaxFallDamage;
+
     public GameObject healthBarPrefab;
     private HealthBarScript _healthBar;
+    private Rigidbody _rb;
+    private float _lastFrameVerticalVelocity;
 
     private void Awake()
     {
@@ -20,6 +25,8 @@ public class PlayerHealthController : MonoBehaviour
         
         _healthBar = go.GetComponent<HealthBarScript>();
         _healthBar.currentHealth = _healthBar.maxHealth;
+
+        _rb = GetComponent<Rigidbody>();
     }
 
     void Update()
@@ -30,11 +37,22 @@ public class PlayerHealthController : MonoBehaviour
             // TODO: kill the player
             Debug.Log("Game over");
         }
+        _lastFrameVerticalVelocity = _rb.velocity.y;
     }
-    
+
+    private void OnCollisionEnter(Collision collision)
+    {
+        // fall damage
+        // TODO: play a sound
+        float impactVelocity = Mathf.Abs(_lastFrameVerticalVelocity);
+        if (impactVelocity >= minFallDamageVerticalVelocity)
+            _healthBar.TakeDamage(_healthBar.maxHealth * fallDamageCurve.Evaluate((impactVelocity - minFallDamageVerticalVelocity) / (minSpeedForMaxFallDamage - minFallDamageVerticalVelocity)));
+    }
+
     private void OnTriggerStay(Collider other)
     {
         if (!other.CompareTag("Ocean")) return;
+        Debug.Log("Touching the ocean");
         _timeSinceLastDrownDamage += Time.deltaTime;
         
         if (_timeSinceLastDrownDamage >= damagePeriod)
