@@ -24,7 +24,7 @@
 
 ## Introduction
 
-**Catastrophe Island** is a Brighton College Unity Project, made by a group of 4 L6th pupils, as detailed in the (Contact Section)[#contact] below.  
+**Catastrophe Island** is a Brighton College Unity Project, made by a group of 4 L6th pupils, as detailed in the [Contact Section](#contact) below.  
 It is a single-player survival game, whereby the player aims to survive the infinitely imminent disasters that wreck havoc across the map for as long as possible.  
 It is made using the [Unity Game Engine](https://unity.com/), and was created across approximately 6 weeks at the beginning of 2022.
   
