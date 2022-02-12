@@ -75,10 +75,10 @@
 ## Contact
 
 Contact the development team via the following email addresses:  
-* [kieran.lock@outlook.com](mailto:kieran.lock@outlook.com)
-* Alice
-* Michael
-* Callum
+* [Kieran Lock](mailto:08klock@brightoncollege.net)
+* Alice Spink
+* Michael Nekrasov
+* Callum Smith
   
 <p align="right">(<a href="#top">back to top</a>)</p>
 
