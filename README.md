@@ -56,7 +56,7 @@ The application is now downloaded. Now just navigate to the save location, open 
 
 ## Branches
 
-The K-Lazer GitHub repository consists of 3 branches:
+The **Catastrophe Island** GitHub repository consists of 3 branches:
 * [Main](https://github.com/BC-Unity-Project-2022/Unity-Catastrophe-Island-Game-2022/tree/main)
 * [Build](https://github.com/BC-Unity-Project-2022/Unity-Catastrophe-Island-Game-2022/tree/build)  
   
