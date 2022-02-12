@@ -52,8 +52,7 @@ public class PlayerHealthController : MonoBehaviour
     private void OnTriggerStay(Collider other)
     {
         if (!other.CompareTag("Ocean")) return;
-        Debug.Log("Touching the ocean");
-        _timeSinceLastDrownDamage += Time.deltaTime;
+        _timeSinceLastDrownDamage += Time.fixedDeltaTime;
         
         if (_timeSinceLastDrownDamage >= damagePeriod)
         {
