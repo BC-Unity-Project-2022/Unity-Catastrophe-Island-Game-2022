@@ -84,6 +84,6 @@ Contact the development team via the following email addresses:
 
 ## License
 
-Distributed under the MIT License. See [LICENSE](https://github.com/BC-Unity-Project-2022/Unity-Catastrophe-Island-Game-2022/blob/main/LICENSE) for more information.
+Distributed under the MIT License. See [LICENSE](https://github.com/BC-Unity-Project-2022/Unity-Catastrophe-Island-Game-2022/blob/build/LICENSE) for more information.
   
 <p align="right">(<a href="#top">back to top</a>)</p>
