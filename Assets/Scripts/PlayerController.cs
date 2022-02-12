@@ -1,7 +1,5 @@
 using System;
-using Newtonsoft.Json.Bson;
-using Unity.Netcode;
-using Unity.Netcode.Components;
+using System.Diagnostics.SymbolStore;
 using UnityEngine;
 using UnityEngine.AI;
 using UnityEngine.Serialization;
@@ -18,10 +16,8 @@ struct UserInput {
     public bool IsCrouching;
 }
 
-[RequireComponent(typeof(NetworkRigidbody))]
 [RequireComponent(typeof(Rigidbody))]
-[RequireComponent(typeof(NetworkTransform))]
-public class PlayerController : NetworkBehaviour
+public class PlayerController : MonoBehaviour
 {
     [SerializeField] private float baseMovementSpeed = 1;
     [SerializeField] private float jumpVelocity = 10f; 
@@ -56,6 +52,8 @@ public class PlayerController : NetworkBehaviour
     [Range(0.0f, 1.0f)]
     [SerializeField] private float crouchAccelerationMultiplier = 0.5f;
     
+    [SerializeField] private float maxWaterMovementSpeed;
+    
     private bool _crouchDisableUntilReleased = false;
 
     private CapsuleCollider _mainCollider;
@@ -74,10 +72,10 @@ public class PlayerController : NetworkBehaviour
     private ColliderShapeParams _colliderShapeParams;
     private int allLayersButPlayers = ~(1 << 6);
 
+    private bool isUnderWater;
+
     private void OnEnable()
     {
-        if (IsClient && IsOwner)
-        {
             _rb = GetComponent<Rigidbody>();
             _physMat = new PhysicMaterial
             {
@@ -95,7 +93,6 @@ public class PlayerController : NetworkBehaviour
             _colliderVerticalDisplacement = _mainCollider.center.y;
             
             _colliderShapeParams = GetColliderShapeParams(false, false);
-        }
     }
 
     private ColliderShapeParams GetColliderShapeParams(bool useCrouchingCollider, bool isInAir)
@@ -301,12 +298,6 @@ public class PlayerController : NetworkBehaviour
         _rb.velocity = newVelocity;
     }
 
-    [ServerRpc]
-    private void HandleMovementServerRpc(UserInput userInput)
-    {
-        HandleMovement(userInput);
-    }
-
     private void HandleMovement(UserInput userInput)
     {
         // get the walking user input
@@ -350,7 +341,6 @@ public class PlayerController : NetworkBehaviour
 
     private void FixedUpdate()
     {
-        if (!IsOwner || !IsClient) return;
         UserInput userInput = new UserInput
         {
             DesiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")),
@@ -358,7 +348,15 @@ public class PlayerController : NetworkBehaviour
             IsCrouching = Input.GetKey(KeyCode.LeftShift)
         };
         
-        if (IsServer) HandleMovement(userInput);
-        else HandleMovementServerRpc(userInput);
+        HandleMovement(userInput);
+    }
+
+    private void OnTriggerEnter(Collider other)
+    {
+        if (other.CompareTag("Ocean")) isUnderWater = true;
+    }
+    private void OnTriggerExit(Collider other)
+    {
+        if (other.CompareTag("Ocean")) isUnderWater = false;
     }
 }
