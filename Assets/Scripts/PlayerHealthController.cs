@@ -11,20 +11,20 @@ public class PlayerHealthController : MonoBehaviour
     public float damagePeriod = 0.1f;
 
     public GameObject healthBarPrefab;
-    private HealthBarScript healthBar;
+    private HealthBarScript _healthBar;
 
     private void Awake()
     {
         var canvas = FindObjectOfType<Canvas>();
         var go = Instantiate(healthBarPrefab, canvas.gameObject.transform, true);
         
-        healthBar = go.GetComponent<HealthBarScript>();
+        _healthBar = go.GetComponent<HealthBarScript>();
     }
 
     void Update()
     {
         // Check if the health is below or equal to 0
-        if (healthBar.currentHealth <= 0)
+        if (_healthBar.currentHealth <= 0)
         {
             // TODO: kill the player
         }
@@ -38,7 +38,7 @@ public class PlayerHealthController : MonoBehaviour
         if (_timeSinceLastDrownDamage >= damagePeriod)
         {
             _timeSinceLastDrownDamage = 0.0f;
-            healthBar.TakeDamage(damageFromOcean);
+            _healthBar.TakeDamage(damageFromOcean);
         }
     }
 }
