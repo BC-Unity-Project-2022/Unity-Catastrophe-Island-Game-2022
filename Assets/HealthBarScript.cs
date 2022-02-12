@@ -1,38 +1,22 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
 public class HealthBarScript : MonoBehaviour
 {
     public int maxHealth = 100;
-    public int currentHealth;
+
+    public int currentHealth = 1;
 
     public Slider slider;
+
+    public void SetCurrentHealth(int health)
+    {
+        currentHealth = health;
+        slider.value = health;
+    }
     
     public void TakeDamage(float damage)
     {
-        currentHealth = Mathf.RoundToInt(currentHealth - damage);
-        if (currentHealth < 0)
-        {
-            EndGame();
-        }
-    }
-
-    private void Update()
-    {
-
-
-    }
-
-    void Start()
-    {
-        currentHealth = maxHealth;
-    }
-
-    void EndGame()
-    {
-        // Application.Quit();
-        Debug.Log("game over");
+        SetCurrentHealth(Mathf.RoundToInt(currentHealth - damage));
     }
 }

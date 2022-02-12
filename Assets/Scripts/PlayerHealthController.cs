@@ -19,6 +19,7 @@ public class PlayerHealthController : MonoBehaviour
         var go = Instantiate(healthBarPrefab, canvas.gameObject.transform, true);
         
         _healthBar = go.GetComponent<HealthBarScript>();
+        _healthBar.currentHealth = _healthBar.maxHealth;
     }
 
     void Update()
@@ -27,6 +28,7 @@ public class PlayerHealthController : MonoBehaviour
         if (_healthBar.currentHealth <= 0)
         {
             // TODO: kill the player
+            Debug.Log("Game over");
         }
     }
     
