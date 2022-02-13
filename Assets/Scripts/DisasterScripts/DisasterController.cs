@@ -128,8 +128,7 @@ public class DisasterController : MonoBehaviour
     {
         float strength = RandomFloat(minStrength, maxStrength);
         int executionTime = RandomInteger(minExecutionTime, maxExecutionTime);
-        // DisasterName disasterName = RandomEnum<DisasterName>();
-        DisasterName disasterName = DisasterName.Tornado;
+        DisasterName disasterName = RandomEnum<DisasterName>();
         Disaster disaster;
 
         Article article;

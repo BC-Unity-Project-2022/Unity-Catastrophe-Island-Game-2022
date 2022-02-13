@@ -1305,6 +1305,14 @@ PrefabInstance:
     m_TransformParent: {fileID: 1099864593}
     m_Modifications:
     - target: {fileID: 5197334988438086545, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
+      propertyPath: m_MaxParticleSize
+      value: 0.01
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197334988438086545, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
+      propertyPath: m_MinParticleSize
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197334988438086545, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
       propertyPath: m_Materials.Array.data[0]
       value: 
       objectReference: {fileID: 2100000, guid: fa9c290deeacd514692af05665fa75a3, type: 2}
@@ -1362,6 +1370,10 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: fa9c290deeacd514692af05665fa75a3, type: 2}
     - target: {fileID: 5197334989094725371, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
       propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5197334989094725371, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
+      propertyPath: m_MaxParticleSize
       value: 1
       objectReference: {fileID: 0}
     - target: {fileID: 5197334989094725371, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
