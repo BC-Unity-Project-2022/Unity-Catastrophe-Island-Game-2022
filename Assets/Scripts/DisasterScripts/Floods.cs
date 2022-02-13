@@ -4,27 +4,36 @@ using TMPro;
 
 public class Floods : MonoBehaviour
 {
-    public float moveSpeed;
-    public int currentExecutionLength;
+    [SerializeField] private float recessionTime = 12f;
+    [SerializeField] private float minimumFloodHeight = 45;
 
-    [SerializeField] private float endDistance = 18f;
-    [SerializeField] private float recessionTime = 3f;
-
+    private bool isActiveBool = false;
+    private bool currentlyReceding = false;
+    private float endDistance = 22f;
+    private float currentRecessionTimer = 0;
+    private int currentExecutionLength;
     private Vector3 startingPosition;
     private Vector3 endingPosition;
     private Vector3 travelDifference;
     private float currentExecutionTimer;
-    private float currentRecessionTimer = 0;
     private float percentageTravelled;
     private float percentageTravelledBack;
     private Disaster currentFlood;
-    private bool isActiveBool = false;
-    private bool currentlyReceding = false;
-
+    private float minimumHeightBuffer;
+    // 18
+    // 45
+    // 70
+    // 18 + 27 + Strength * 2.5
     private void Start()
     {
         startingPosition = transform.position;
-        endingPosition = transform.position + new Vector3(0, endDistance, 0);
+        minimumHeightBuffer = minimumFloodHeight - startingPosition.y;
+        UpdateFloodHeight(5f);
+    }
+
+    private void UpdateFloodHeight(float strengthNumber) 
+    {
+        endingPosition = transform.position + new Vector3(0, (float)(minimumHeightBuffer + strengthNumber * 2.5), 0);
         travelDifference = endingPosition - startingPosition;
     }
 
@@ -69,7 +78,8 @@ public class Floods : MonoBehaviour
         currentFlood = flood;
         currentExecutionLength = executionTime;
         transform.position = startingPosition;
-        endDistance = 8f + 2 * strength;
+        endDistance = strength;
+        UpdateFloodHeight(strength);
         currentFlood.isActive = true;
     }
 
