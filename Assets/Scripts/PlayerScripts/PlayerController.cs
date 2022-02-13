@@ -10,15 +10,12 @@ struct ColliderShapeParams
     public float Height;
     public float VerticalDisplacement;
 }
-struct UserInput {
-    public Vector3 DesiredDirection;
-    public bool IsJumping;
-    public bool IsCrouching;
-}
 
 [RequireComponent(typeof(Rigidbody))]
 public class PlayerController : MonoBehaviour
 {
+    [SerializeField] private Transform aimController;
+
     [SerializeField] private float baseMovementSpeed = 1;
     [SerializeField] private float jumpVelocity = 10f; 
     [SerializeField] private float jumpCrouchVelocity = 15f; 
@@ -37,24 +34,30 @@ public class PlayerController : MonoBehaviour
 
     [SerializeField] private float groundCheckSphereDisplacement = 1.0f;
     [SerializeField] private float groundCheckSphereRadius = 1.0f;
-
+    
     [Range(0.0f, 1.0f)]
     [SerializeField] private float airAccelerationMultiplier = 0.5f;
 
     [SerializeField] private float coyoteTime = 0.5f;
     
-    private float _colliderHeight;
-    private float _colliderVerticalDisplacement;
     [SerializeField] private float colliderCrouchHeight = 1;
 
     [Range(0.0f, 1.0f)]
     [SerializeField] private float crouchSpeedMultiplier = 0.5f;
     [Range(0.0f, 1.0f)]
     [SerializeField] private float crouchAccelerationMultiplier = 0.5f;
+    [SerializeField] private float timeToCrouch;
     
     [SerializeField] private float maxWaterMovementSpeed;
+    public Vector3 desiredDirection;
+    public bool isJumping;
+    public bool isCrouching;
     
-    private bool _crouchDisableUntilReleased = false;
+    private float _crouchTolerance = 0.0001f;
+    private float _colliderHeight;
+    private float _colliderVerticalDisplacement;
+    
+    private bool _crouchDisabledUntilReleased = false;
 
     private CapsuleCollider _mainCollider;
 
@@ -67,7 +70,8 @@ public class PlayerController : MonoBehaviour
 
     private PhysicMaterial _physMat;
 
-    private bool _isCrouching = false;
+    // 1 means not crouching, 0 means crouching
+    private float _crouchState = 1;
 
     private ColliderShapeParams _colliderShapeParams;
     private int allLayersButPlayers = ~(1 << 6);
@@ -92,23 +96,14 @@ public class PlayerController : MonoBehaviour
             _colliderHeight = _mainCollider.height;
             _colliderVerticalDisplacement = _mainCollider.center.y;
             
-            _colliderShapeParams = GetColliderShapeParams(false, false);
+            _colliderShapeParams = GetColliderShapeParams(_crouchState, false);
     }
 
-    private ColliderShapeParams GetColliderShapeParams(bool useCrouchingCollider, bool isInAir)
+    private ColliderShapeParams GetColliderShapeParams(float crouchState, bool isInAir)
     {
         var ret = new ColliderShapeParams();
-        if (useCrouchingCollider)
-        { 
-            // spawn it in th middle if in air
-            ret.VerticalDisplacement = isInAir ? _colliderVerticalDisplacement :  (colliderCrouchHeight - _colliderHeight) / 2;
-            ret.Height = colliderCrouchHeight;
-        }
-        else
-        {
-            ret.Height = _colliderHeight;
-            ret.VerticalDisplacement = _colliderVerticalDisplacement;
-        }
+        ret.Height = Mathf.SmoothStep(colliderCrouchHeight, _colliderHeight, crouchState);
+        ret.VerticalDisplacement = Mathf.SmoothStep(isInAir ? _colliderVerticalDisplacement :  (colliderCrouchHeight - _colliderHeight) / 2, _colliderVerticalDisplacement, crouchState);
         return ret;
     }
 
@@ -163,7 +158,7 @@ public class PlayerController : MonoBehaviour
         float acceleration = groundAcceleration;
         if (isInAir)
             acceleration *= airAccelerationMultiplier;
-        if (_isCrouching)
+        if (_crouchState < 1)
             acceleration *= crouchAccelerationMultiplier;
         
         // if the velocity is non-zero, but we want to stop
@@ -173,38 +168,50 @@ public class PlayerController : MonoBehaviour
         return acceleration;
     }
 
-    private bool HandleCrouch(bool wantToCrouch, bool isInAir)
+    private void HandleCrouch(bool wantToCrouch, bool isInAir)
     {
-            if (_crouchDisableUntilReleased)
-            {
-                if (wantToCrouch) wantToCrouch = false;
-                else _crouchDisableUntilReleased = false;
-            }
+        if (_crouchDisabledUntilReleased)
+        {
+            if (wantToCrouch) wantToCrouch = false;
+            else _crouchDisabledUntilReleased = false;
+        }
 
-            if (_isCrouching != wantToCrouch)
+        int desiredCrouchState = wantToCrouch ? 0 : 1;
+
+        // if we need to change
+        if (Math.Abs(_crouchState - desiredCrouchState) > _crouchTolerance)
+        {
+            // if we want to uncrouch, check that we can do that
+            if (!wantToCrouch)
             {
-                // if we want to uncrouch
-                if (_isCrouching && !wantToCrouch)
+                // check that the full collider would work
+                Vector3 position = transform.position;
+
+                float radius = _mainCollider.radius;
+
+                Vector3 sphereCenterDisplacement = new Vector3(0, _colliderHeight / 2 - radius, 0);
+
+                if (!Physics.CheckCapsule(position + sphereCenterDisplacement, position - sphereCenterDisplacement,
+                    radius, allLayersButPlayers))
                 {
-                    // check that the full collider would work
-                    Vector3 position = transform.position;
-
-                    float radius = _mainCollider.radius;
-
-                    Vector3 sphereCenterDisplacement = new Vector3(0, _colliderHeight / 2 - radius, 0);
-                    
-                    if (!Physics.CheckCapsule(position + sphereCenterDisplacement, position - sphereCenterDisplacement, radius, allLayersButPlayers))
-                        _isCrouching = false;
+                    wantToCrouch = false;
+                    desiredCrouchState = 1;
                 }
-                // crouching
-                else
-                    _isCrouching = true;
-                _colliderShapeParams = GetColliderShapeParams(_isCrouching, isInAir);
             }
             
-            _mainCollider.height = _colliderShapeParams.Height;
-            _mainCollider.center = new Vector3(0, _colliderShapeParams.VerticalDisplacement, 0);
-            return _isCrouching;
+            // update the height
+            if (desiredCrouchState == 1)
+                _crouchState += Time.fixedDeltaTime / timeToCrouch;
+            else 
+                _crouchState -= Time.fixedDeltaTime / timeToCrouch;
+            
+            _crouchState = Mathf.Clamp(_crouchState, 0, 1);
+            _colliderShapeParams = GetColliderShapeParams(_crouchState, isInAir);
+        }
+            
+        _mainCollider.height = _colliderShapeParams.Height;
+        _mainCollider.center = new Vector3(0, _colliderShapeParams.VerticalDisplacement, 0);
+        aimController.localPosition = _mainCollider.center;
     }
 
     private void HandleWalking(Vector3 scaledDesiredDirectionRelativeToTransform, bool isInAir)
@@ -214,7 +221,7 @@ public class PlayerController : MonoBehaviour
         
         float currentMaxMovementSpeed = baseMovementSpeed;
         // moving while crouching is slower
-        if (_isCrouching) currentMaxMovementSpeed *= crouchSpeedMultiplier;
+        currentMaxMovementSpeed *= Mathf.Lerp(crouchSpeedMultiplier, 1, _crouchState);
 
         Vector3 initHorizontalVel = _rb.velocity;
         initHorizontalVel.y = 0;
@@ -298,10 +305,10 @@ public class PlayerController : MonoBehaviour
         _rb.velocity = newVelocity;
     }
 
-    private void HandleMovement(UserInput userInput)
+    private void HandleMovement()
     {
         // get the walking user input
-        Vector3 desiredDirectionRelativeToTransform = userInput.DesiredDirection;
+        Vector3 desiredDirectionRelativeToTransform = desiredDirection;
         desiredDirectionRelativeToTransform.y = 0;
         // put a speed cap as a protection against cheaters
         if (desiredDirectionRelativeToTransform.sqrMagnitude > 1)
@@ -309,20 +316,26 @@ public class PlayerController : MonoBehaviour
 
         bool isInAir = !isOnTheFloor() && _lastTimeOnGround + coyoteTime < Time.fixedTime;
 
-        HandleCrouch(userInput.IsCrouching, isInAir);
+        HandleCrouch(isCrouching, isInAir);
         HandleWalking(desiredDirectionRelativeToTransform, isInAir);
 
         // jumping
-        if (userInput.IsJumping)
+        if (isJumping)
         {
-            bool canJump = !isInAir && Time.fixedTime - _previousJumpSecs >= jumpCooldownSecs;
+            // reset the flag
+            isJumping = false;
+            
+            bool canJump = !isInAir;
+            canJump &= Time.fixedTime - _previousJumpSecs >= jumpCooldownSecs;
+            // can not be mid crouch transition
+            canJump &= _crouchState < _crouchTolerance || _crouchState > 1 - _crouchTolerance;
             if (canJump)
             {
-                float thisJumpVelocity = jumpVelocity;
-                if (_isCrouching)
+                float currentJumpVelocity = jumpVelocity;
+                if (_crouchState < _crouchTolerance)
                 {
-                    thisJumpVelocity = jumpCrouchVelocity;
-                    _crouchDisableUntilReleased = true;
+                    currentJumpVelocity = jumpCrouchVelocity;
+                    _crouchDisabledUntilReleased = true;
                 }
                 // Debug.Log($"Proposed coyote time: {Time.fixedTime - lastTimeOnGround}s");
                 // jump
@@ -331,7 +344,7 @@ public class PlayerController : MonoBehaviour
                 _lastTimeOnGround = -10;
                 
                 Vector3 vel = _rb.velocity;
-                vel.y = thisJumpVelocity;
+                vel.y = currentJumpVelocity;
                 _rb.velocity = vel;
                 
                 _previousJumpSecs = Time.fixedTime;
@@ -339,16 +352,16 @@ public class PlayerController : MonoBehaviour
         }
     }
 
+    private void Update()
+    {
+        desiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
+        isJumping |= Input.GetButtonDown("Jump"); // This is so that we do not forget the input if multiple updates are called before the fixedUpdate
+        isCrouching = Input.GetKey(KeyCode.LeftShift);
+    }
+
     private void FixedUpdate()
     {
-        UserInput userInput = new UserInput
-        {
-            DesiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical")),
-            IsJumping = Input.GetButton("Jump"),
-            IsCrouching = Input.GetKey(KeyCode.LeftShift)
-        };
-        
-        HandleMovement(userInput);
+        HandleMovement();
     }
 
     private void OnTriggerEnter(Collider other)
