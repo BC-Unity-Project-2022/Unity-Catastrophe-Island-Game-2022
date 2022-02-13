@@ -1,5 +1,4 @@
 using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 
 public class MainTornado : MonoBehaviour
@@ -9,9 +8,10 @@ public class MainTornado : MonoBehaviour
     public Transform tornadoCenter;
     public float pullforce;
     public float refreshRate;
-        
+
     private void OnTriggerEnter(Collider other)
     {
+        Debug.Log("Entered");
         if (other.tag == "OJB" && !disabled)
         {
             StartCoroutine(pullObject(other, true));
@@ -20,6 +20,7 @@ public class MainTornado : MonoBehaviour
 
     private void OnTriggerExit(Collider other)
     {
+        Debug.Log("Exited");
         if (other.tag == "OJB" && !disabled)
         {
             StartCoroutine(pullObject(other, false));
@@ -63,7 +64,7 @@ public class MainTornado : MonoBehaviour
         {
             return;
         }
-        
+
         float perlin = perlinScale * Mathf.PerlinNoise(Time.time * xScale, 0.0f);
 
         //Y coordinate
