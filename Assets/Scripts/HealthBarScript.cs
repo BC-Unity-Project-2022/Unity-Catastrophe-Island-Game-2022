@@ -17,6 +17,7 @@ public class HealthBarScript : MonoBehaviour
     
     public void TakeDamage(float damage)
     {
-        SetCurrentHealth(Mathf.RoundToInt(currentHealth - damage));
+        int newHealth = Mathf.RoundToInt(currentHealth - damage);
+        SetCurrentHealth(newHealth);
     }
 }
