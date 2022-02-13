@@ -1,7 +1,4 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
-using System.Threading.Tasks;
 using TMPro;
 
 
@@ -10,7 +7,7 @@ public class Floods : MonoBehaviour
     public float moveSpeed;
     public int currentExecutionLength;
 
-    [SerializeField] private float endDistance = 10f;
+    [SerializeField] private float endDistance = 18f;
     [SerializeField] private float recessionTime = 3f;
 
     private Vector3 startingPosition;
@@ -67,11 +64,12 @@ public class Floods : MonoBehaviour
         currentFlood.isActive = false;
     }
 
-    public void TriggerFlood(Disaster flood, int executionTime)
+    public void TriggerFlood(Disaster flood, int executionTime, float strength)
     {
         currentFlood = flood;
         currentExecutionLength = executionTime;
         transform.position = startingPosition;
+        endDistance = 8f + 2 * strength;
         currentFlood.isActive = true;
     }
 
@@ -96,7 +94,7 @@ public class Flood : Disaster
 
         Floods floodScript = waterPlane.GetComponent<Floods>();
 
-        floodScript.TriggerFlood(this, executionLength);
+        floodScript.TriggerFlood(this, executionLength, strength);
     }
 
     public override void EndDisaster()

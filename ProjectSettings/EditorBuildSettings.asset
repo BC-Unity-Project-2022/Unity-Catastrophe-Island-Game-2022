@@ -6,9 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Test Scenes/Michael's Test Scene.unity
-    guid: 9e62657c0b0733a47a0329b199462d95
-  - enabled: 0
-    path: 
-    guid: 00000000000000000000000000000000
+    path: Assets/Scenes/FInal Scenes/Game Scene.unity
+    guid: 0e551c84ef5bdc1488ed652428e945ff
   m_configObjects: {}
