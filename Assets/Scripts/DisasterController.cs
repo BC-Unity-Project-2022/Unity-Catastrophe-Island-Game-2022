@@ -1,8 +1,6 @@
-using System.Collections;
 using System;
 using UnityEngine;
 using TMPro;
-using System.Threading.Tasks;
 
 struct DisasterInfo
 {
@@ -13,8 +11,6 @@ struct DisasterInfo
 public enum DisasterName
 {
     Tornado,
-    Earthquake,
-    Sinkhole, 
     Flood
 }
 
@@ -37,8 +33,8 @@ public class DisasterController : MonoBehaviour
 
     [SerializeField] private GameObject waterPlane;
     [SerializeField] private GameObject tornado;
-    [SerializeField] private GameObject sinkhole;
-    [SerializeField] private GameObject earthquake;
+    // [SerializeField] private GameObject sinkhole;
+    // [SerializeField] private GameObject earthquake;
 
     DisasterInfo disasterInfo = new DisasterInfo();
 
@@ -122,7 +118,7 @@ public class DisasterController : MonoBehaviour
     
     private void ChangeIncomingText()
     {
-        displayText.text = $"{disasterInfo.currentDisaster.article} {disasterInfo.currentDisaster.name} is imminent in {textIteration}s!\nWatch out!";
+        displayText.text = $"{disasterInfo.nextDisaster.article} {disasterInfo.nextDisaster.name} is imminent in {textIteration}s!\nWatch out!";
 
         textIteration -= 1;
         lastCountdownTime = Time.time;
@@ -132,8 +128,7 @@ public class DisasterController : MonoBehaviour
     {
         float strength = RandomFloat(minStrength, maxStrength);
         int executionTime = RandomInteger(minExecutionTime, maxExecutionTime);
-        // DisasterName disasterName = RandomEnum<DisasterName>();
-        DisasterName disasterName = DisasterName.Flood;
+        DisasterName disasterName = RandomEnum<DisasterName>();
         Disaster disaster;
 
         Article article;
@@ -155,12 +150,12 @@ public class DisasterController : MonoBehaviour
             case DisasterName.Tornado:
                 disaster = new Tornado(tornado, article, disasterName, strength, executionTime, displayText);
                 break;
-            case DisasterName.Earthquake:
-                disaster = new Earthquake(earthquake, article, disasterName, strength, executionTime, displayText);
-                break;
-            case DisasterName.Sinkhole:
-                disaster = new Sinkhole(sinkhole, article, disasterName, strength, executionTime, displayText);
-                break;
+            // case DisasterName.Earthquake:
+            // disaster = new Earthquake(earthquake, article, disasterName, strength, executionTime, displayText);
+            // break;
+            // case DisasterName.Sinkhole:
+            // disaster = new Sinkhole(sinkhole, article, disasterName, strength, executionTime, displayText);
+            // break;
             default:
                 throw new ArgumentException();
         }

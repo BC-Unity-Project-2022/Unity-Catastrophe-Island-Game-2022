@@ -14,7 +14,7 @@ OcclusionCullingSettings:
 RenderSettings:
   m_ObjectHideFlags: 0
   serializedVersion: 9
-  m_Fog: 1
+  m_Fog: 0
   m_FogColor: {r: 0.29102886, g: 0.41550654, b: 0.5660378, a: 1}
   m_FogMode: 1
   m_FogDensity: 0.01
@@ -401,9 +401,7 @@ MonoBehaviour:
   maxExecutionTime: 25
   displayText: {fileID: 1287172210}
   waterPlane: {fileID: 20096662}
-  tornado: {fileID: 716902864}
-  sinkhole: {fileID: 1334433937}
-  earthquake: {fileID: 478565093}
+  tornado: {fileID: 903777276}
 --- !u!4 &553920784
 Transform:
   m_ObjectHideFlags: 0
@@ -423,7 +421,7 @@ PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
   m_Modification:
-    m_TransformParent: {fileID: 0}
+    m_TransformParent: {fileID: 801758123}
     m_Modifications:
     - target: {fileID: 1747693543929289345, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
       propertyPath: m_Enabled
@@ -435,7 +433,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1747693543944632345, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
       propertyPath: m_RootOrder
-      value: 7
+      value: 2
       objectReference: {fileID: 0}
     - target: {fileID: 1747693543944632345, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
       propertyPath: m_LocalScale.x
@@ -496,49 +494,6 @@ PrefabInstance:
     m_RemovedComponents:
     - {fileID: 1747693544968175927, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
   m_SourcePrefab: {fileID: 100100000, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
---- !u!1 &716902864
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 716902865}
-  - component: {fileID: 716902866}
-  m_Layer: 0
-  m_Name: Tornado
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!4 &716902865
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 716902864}
-  m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_Children: []
-  m_Father: {fileID: 801758123}
-  m_RootOrder: 2
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &716902866
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 716902864}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d7a9909bc54778841a71bcd0fae374f2, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!1 &771481960
 GameObject:
   m_ObjectHideFlags: 0
@@ -5433,7 +5388,7 @@ Transform:
   m_Children:
   - {fileID: 20096663}
   - {fileID: 1334433938}
-  - {fileID: 716902865}
+  - {fileID: 903777278}
   - {fileID: 478565095}
   m_Father: {fileID: 2141119071}
   m_RootOrder: 0
@@ -10223,15 +10178,24 @@ MonoBehaviour:
   m_GameObject: {fileID: 903777276}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 8d8427c579b8e72428e5424ca1bfa488, type: 3}
+  m_Script: {fileID: 11500000, guid: d7a9909bc54778841a71bcd0fae374f2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isActive: 1
   tornadoParticles: {fileID: 1982841461}
-  movementSpeed: 20
-  pullingStrength: 10
-  centreOffset: 30
-  startingCoordinates: {x: 100, y: 20, z: 300}
+  movementSpeed: 10
+  pullingStrength: 5000
+  centreOffset: 10
+  startingCoordinates: {x: 250, y: 50, z: 250}
+  possibleStartingCoordinates:
+  - {x: 70, y: 25, z: 70}
+  - {x: 70, y: 25, z: 430}
+  - {x: 430, y: 25, z: 70}
+  - {x: 430, y: 25, z: 430}
+  - {x: 70, y: 25, z: 250}
+  - {x: 250, y: 25, z: 70}
+  - {x: 430, y: 25, z: 250}
+  - {x: 250, y: 25, z: 430}
+  - {x: 250, y: 50, z: 250}
 --- !u!4 &903777278 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1747693543944632345, guid: 0149573d6169898478d2ef86d5a6e716, type: 3}
@@ -10293,7 +10257,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: Test Text
+  m_text: 
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
   m_sharedMaterial: {fileID: 2180264, guid: 8f586378b4e144a9851e7b34d9b748ee, type: 2}
