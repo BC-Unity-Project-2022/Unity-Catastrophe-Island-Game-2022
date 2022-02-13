@@ -9,7 +9,7 @@ public class Tornadoes : MonoBehaviour
 {
     [SerializeField] private GameObject tornadoParticles;
     [SerializeField] private float movementSpeed = 10;
-    [SerializeField] private float pullingStrength = 5000;
+    [SerializeField] private float pullingStrengthModifier = 100;
     [SerializeField] private float centreOffset = 10;
     [SerializeField] private Vector3 middleCoordinates = new Vector3(250, 50, 250);
     [SerializeField] private List<Vector3> possibleStartingCoordinates = new List<Vector3>() {
@@ -24,7 +24,7 @@ public class Tornadoes : MonoBehaviour
         new Vector3(250, 50, 250)
     };
 
-
+    private float pullingStrength = 5f;
     private bool isActive = false;
     private List<Collider> collidersInRange = new List<Collider>();
     private System.Random random = new System.Random();
@@ -147,7 +147,7 @@ public class Tornadoes : MonoBehaviour
 
     public void TriggerTornado(Tornado tornado, int length, float strength)
     {
-        pullingStrength = strength * 1000;
+        pullingStrength = strength * pullingStrengthModifier;
         currentTornado = tornado;
         executionLength = length;
 
