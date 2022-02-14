@@ -7,6 +7,8 @@ namespace PlayerScripts
     {
         [SerializeField] private Material wholeScreenShaderMaterial;
 
+        private Material _material;
+
         private GameManager _gameManager;
         private static readonly int BloodColorPropertyId = Shader.PropertyToID("_BloodDeathColor");
         private static readonly int DrownColorPropertyId = Shader.PropertyToID("_DrownDeathColor");
@@ -15,24 +17,25 @@ namespace PlayerScripts
         private void Start()
         {
             _gameManager = FindObjectOfType<GameManager>();
+            _material = new Material(wholeScreenShaderMaterial);
         }
 
         private void OnRenderImage(RenderTexture src, RenderTexture dest)
         {
             float materialAlpha = _gameManager.deathAnimationProgression;
             
-            Color bloodColor = wholeScreenShaderMaterial.GetColor(BloodColorPropertyId);
-            Color drownColor = wholeScreenShaderMaterial.GetColor(DrownColorPropertyId);
+            Color bloodColor = _material.GetColor(BloodColorPropertyId);
+            Color drownColor = _material.GetColor(DrownColorPropertyId);
             bloodColor.a = materialAlpha;
             drownColor.a = materialAlpha;
             
-            wholeScreenShaderMaterial.SetColor(BloodColorPropertyId, bloodColor);
-            wholeScreenShaderMaterial.SetColor(DrownColorPropertyId, drownColor);
+            _material.SetColor(BloodColorPropertyId, bloodColor);
+            _material.SetColor(DrownColorPropertyId, drownColor);
 
             int damageTypeSelector = _gameManager.lastDamageType == DamageType.DROWNING ? 0 : 1;
-            wholeScreenShaderMaterial.SetInt(DeathColorSelectorPropertyId, damageTypeSelector);
+            _material.SetInt(DeathColorSelectorPropertyId, damageTypeSelector);
             
-            Graphics.Blit(src, dest, wholeScreenShaderMaterial);
+            Graphics.Blit(src, dest, _material);
         }
     }
 }

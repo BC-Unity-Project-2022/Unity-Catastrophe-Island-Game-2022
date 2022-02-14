@@ -104,6 +104,9 @@ public class GameManager : MonoBehaviour
 
     public void KillPlayer(float damagePower)
     {
+        // guaranteed to not be not a number
+        float scaledDamagePower = Mathf.Log(Mathf.Abs(damagePower) + 1);
+        
         playerLifeStatus = PlayerLifeStatus.DEAD;
         // Lift the constraints on the rigidbody, to make it feel like a ragdoll
         var rb = _playerController.GetComponent<Rigidbody>();
@@ -127,8 +130,9 @@ public class GameManager : MonoBehaviour
         // If died of fall damage, apply a random rotation
         if (lastDamageType == DamageType.FALL_DAMAGE)
         {
-            float magnitude = ragdollRotationEffectStrength * Mathf.Log(Mathf.Abs(damagePower));
-            rb.angularVelocity += new Vector3(Random.Range(-1, 1), Random.Range(-1, 1), Random.Range(-1, 1)) * magnitude;
+            float magnitude = ragdollRotationEffectStrength * scaledDamagePower;
+            
+            rb.angularVelocity += new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-1.0f, 1.0f), Random.Range(-1.0f, 1.0f)) * magnitude;
         }
     }
 }

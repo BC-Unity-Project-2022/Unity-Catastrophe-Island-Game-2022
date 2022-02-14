@@ -32,7 +32,7 @@ namespace PlayerScripts
             
             // Check if the health is below or equal to 0
             if (currentHealth <= 0)
-                _gameManager.KillPlayer(-health);
+                _gameManager.KillPlayer(-currentHealth);
         }
     
         public void TakeDamage(float damage, DamageType type)
