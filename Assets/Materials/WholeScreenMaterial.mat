@@ -58,6 +58,7 @@ Material:
     m_Floats:
     - _BumpScale: 1
     - _Cutoff: 0.5
+    - _DeathColorSelector: 1
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _GlossMapScale: 1
@@ -73,7 +74,9 @@ Material:
     - _UVSec: 0
     - _ZWrite: 1
     m_Colors:
+    - _BloodDeathColor: {r: 1, g: 0, b: 0, a: 0}
     - _Color: {r: 1, g: 0, b: 0, a: 1}
+    - _DrownDeathColor: {r: 0.4285333, g: 0.74233866, b: 0.8490566, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _TargetColour: {r: 0.754717, g: 0.20291919, b: 0.20291919, a: 0.13333334}
   m_BuildTextureStacks: []

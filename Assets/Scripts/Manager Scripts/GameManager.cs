@@ -28,6 +28,8 @@ public class GameManager : MonoBehaviour
     [SerializeField]
     private float deathAnimationTime = 3.0f; // in seconds
     
+    [SerializeField] private float ragdollRotationEffectStrength;
+    
     private PlayerController _playerController;
     
     private MapData _currentMapData;
@@ -37,6 +39,7 @@ public class GameManager : MonoBehaviour
 
     [HideInInspector]
     public DamageType lastDamageType = DamageType.UNKNOWN;
+
         
     private void Awake()
     {
@@ -99,7 +102,7 @@ public class GameManager : MonoBehaviour
         deathAnimationProgression = 0;
     }
 
-    public void KillPlayer()
+    public void KillPlayer(float damagePower)
     {
         playerLifeStatus = PlayerLifeStatus.DEAD;
         // Lift the constraints on the rigidbody, to make it feel like a ragdoll
@@ -120,5 +123,12 @@ public class GameManager : MonoBehaviour
                 bounceCombine = PhysicMaterialCombine.Maximum,
                 frictionCombine = PhysicMaterialCombine.Maximum
         };
+        
+        // If died of fall damage, apply a random rotation
+        if (lastDamageType == DamageType.FALL_DAMAGE)
+        {
+            float magnitude = ragdollRotationEffectStrength * Mathf.Log(Mathf.Abs(damagePower));
+            rb.angularVelocity += new Vector3(Random.Range(-1, 1), Random.Range(-1, 1), Random.Range(-1, 1)) * magnitude;
+        }
     }
 }

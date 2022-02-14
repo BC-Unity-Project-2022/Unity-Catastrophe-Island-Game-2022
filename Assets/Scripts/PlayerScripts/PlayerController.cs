@@ -91,7 +91,6 @@ namespace PlayerScripts
             };
 
             _mainCollider = GetComponent<CapsuleCollider>();
-            _mainCollider.sharedMaterial = _physMat;
 
             _colliderHeight = _mainCollider.height;
             _colliderVerticalDisplacement = _mainCollider.center.y;
@@ -238,6 +237,11 @@ namespace PlayerScripts
 
             // make sure that physics doesn't go wonky on slopes when stationary
             _physMat.staticFriction = scaledDesiredDirectionRelativeToTransform == Vector3.zero ? 1 : 0;
+            
+            // Add some bounciness when not touching the ground for fun
+            _physMat.bounciness = isInAir ? 0.6f : 0.0f;
+            _physMat.bounceCombine = isInAir ? PhysicMaterialCombine.Maximum : PhysicMaterialCombine.Minimum;
+            _mainCollider.material = _physMat;
 
             Vector3 desiredVelocityRelative = scaledDesiredDirectionRelativeToTransform * currentMaxMovementSpeed;
             // try to counteract velocity to move in the desired direction
