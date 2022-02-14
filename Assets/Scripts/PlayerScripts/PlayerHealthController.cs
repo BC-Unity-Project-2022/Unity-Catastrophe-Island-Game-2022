@@ -57,7 +57,7 @@ namespace PlayerScripts
 
         private void OnTriggerStay(Collider other)
         {
-            if (!other.CompareTag("Ocean")) return;
+            if (!other.CompareTag("NonBreathable")) return;
             _timeSinceLastDrownDamage += Time.fixedDeltaTime;
         
             if (_timeSinceLastDrownDamage >= oceanDamagePeriod)

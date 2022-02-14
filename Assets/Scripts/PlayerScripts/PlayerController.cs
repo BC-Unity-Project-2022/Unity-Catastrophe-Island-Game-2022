@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.Serialization;
 
 namespace PlayerScripts
 {
@@ -46,7 +47,8 @@ namespace PlayerScripts
         [SerializeField] private float crouchAccelerationMultiplier = 0.5f;
         [SerializeField] private float timeToCrouch;
     
-        [SerializeField] private float maxWaterMovementSpeed;
+        [SerializeField] private float waterMaxMovementSpeedMultiplier;
+        [SerializeField] private float waterSinkingSpeed;
         public Vector3 desiredDirection;
         public bool isJumping;
         public bool isCrouching;
@@ -74,7 +76,7 @@ namespace PlayerScripts
         private ColliderShapeParams _colliderShapeParams;
         private int allLayersButPlayers = ~(1 << 6);
 
-        private bool isUnderWater;
+        private bool isSwimming;
         
         private GameManager _gameManager;
 
@@ -218,11 +220,12 @@ namespace PlayerScripts
         private void HandleWalking(Vector3 scaledDesiredDirectionRelativeToTransform, bool isInAir)
         {
             //  for scaledDesiredDirectionRelativeToTransform, z represents forwards-backwards and x is left-right
-        
+            if (isSwimming) _crouchState = 1;
         
             float currentMaxMovementSpeed = baseMovementSpeed;
             // moving while crouching is slower
             currentMaxMovementSpeed *= Mathf.Lerp(crouchSpeedMultiplier, 1, _crouchState);
+            if (isSwimming) currentMaxMovementSpeed *= waterMaxMovementSpeedMultiplier;
 
             Vector3 initHorizontalVel = _rb.velocity;
             initHorizontalVel.y = 0;
@@ -308,6 +311,7 @@ namespace PlayerScripts
             // apply the velocity
             Vector3 newVelocity = newHorizontalVel;
             newVelocity.y = _rb.velocity.y;
+
             _rb.velocity = newVelocity;
         }
 
@@ -332,6 +336,7 @@ namespace PlayerScripts
                 isJumping = false;
             
                 bool canJump = !isInAir;
+                canJump &= !isSwimming;
                 canJump &= Time.fixedTime - _previousJumpSecs >= jumpCooldownSecs;
                 // can not be mid crouch transition
                 canJump &= _crouchState < _crouchTolerance || _crouchState > 1 - _crouchTolerance;
@@ -367,6 +372,16 @@ namespace PlayerScripts
 
         private void FixedUpdate()
         {
+            // Make it feel floaty in water
+            _rb.useGravity = !isSwimming;
+            if (isSwimming)
+            {
+                Vector3 vel = _rb.velocity;
+                
+                if (isSwimming) vel.y = -waterSinkingSpeed;
+                _rb.velocity = vel;
+            }
+            
             // If the player is dead, disable movement
             if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD)
                 return;
@@ -375,11 +390,11 @@ namespace PlayerScripts
 
         private void OnTriggerEnter(Collider other)
         {
-            if (other.CompareTag("Ocean")) isUnderWater = true;
+            if (other.CompareTag("Swimmable")) isSwimming = true;
         }
         private void OnTriggerExit(Collider other)
         {
-            if (other.CompareTag("Ocean")) isUnderWater = false;
+            if (other.CompareTag("Swimmable")) isSwimming = false;
         }
     }
 }

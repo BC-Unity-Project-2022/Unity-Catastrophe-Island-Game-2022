@@ -130,10 +130,11 @@ MonoBehaviour:
   airAccelerationMultiplier: 0.5
   coyoteTime: 0.07
   colliderCrouchHeight: 1
-  crouchSpeedMultiplier: 0.2
+  crouchSpeedMultiplier: 0.3
   crouchAccelerationMultiplier: 1
   timeToCrouch: 0.2
-  maxWaterMovementSpeed: 0
+  waterMaxMovementSpeedMultiplier: 0.5
+  waterSinkingSpeed: 1.5
   desiredDirection: {x: 0, y: 0, z: 0}
   isJumping: 0
   isCrouching: 0
