@@ -3,7 +3,9 @@ Shader "Unlit/WholeScreenShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
-        _Color ("Color tint", Color) = (1, 1, 1, 1)
+        _DeathColorSelector ("Select between blood or drown", int) = 1
+        _BloodDeathColor ("Blood death color tint", Color) = (1, 1, 1, 1)
+        _DrownDeathColor ("Drown death color tint", Color) = (1, 1, 1, 1)
     }
     SubShader
     {
@@ -33,7 +35,9 @@ Shader "Unlit/WholeScreenShader"
                 float4 vertex : SV_POSITION;
             };
 
-            fixed4 _Color;
+            int _DeathColorSelector;
+            fixed4 _BloodDeathColor;
+            fixed4 _DrownDeathColor;
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
@@ -53,8 +57,9 @@ Shader "Unlit/WholeScreenShader"
                 
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
-                
-                fixed4 tintedColor = lerp(col, _Color, _Color.w);
+
+                fixed4 deathColor = _DeathColorSelector == 0 ? _DrownDeathColor : _BloodDeathColor;
+                fixed4 tintedColor = lerp(col, deathColor, deathColor.w);
                 
                 return tintedColor;
             }

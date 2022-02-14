@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
@@ -21,7 +22,7 @@ namespace PlayerScripts
 
         private GameManager _gameManager;
 
-        private void Start()
+        private void Awake()
         {
             var canvas = FindObjectOfType<Canvas>();
             var go = Instantiate(healthBarPrefab, canvas.gameObject.transform, true);
@@ -31,15 +32,16 @@ namespace PlayerScripts
 
             _rb = GetComponent<Rigidbody>();
             
+        }
+
+        private void Start()
+        {
             _gameManager = FindObjectOfType<GameManager>();
         }
 
         void Update()
         {
             if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD) return;
-            // Check if the health is below or equal to 0
-            if (_healthBar.currentHealth <= 0)
-                _gameManager.KillPlayer();
             
             _lastFrameVerticalVelocity = _rb.velocity.y;
         }
@@ -50,7 +52,7 @@ namespace PlayerScripts
             // TODO: play a sound
             float impactVelocity = Mathf.Abs(_lastFrameVerticalVelocity);
             if (impactVelocity >= minFallDamageVerticalVelocity)
-                _healthBar.TakeDamage(_healthBar.maxHealth * fallDamageCurve.Evaluate((impactVelocity - minFallDamageVerticalVelocity) / (minSpeedForMaxFallDamage - minFallDamageVerticalVelocity)));
+                _healthBar.TakeDamage(_healthBar.maxHealth * fallDamageCurve.Evaluate((impactVelocity - minFallDamageVerticalVelocity) / (minSpeedForMaxFallDamage - minFallDamageVerticalVelocity)), DamageType.FALL_DAMAGE);
         }
 
         private void OnTriggerStay(Collider other)
@@ -61,7 +63,7 @@ namespace PlayerScripts
             if (_timeSinceLastDrownDamage >= oceanDamagePeriod)
             {
                 _timeSinceLastDrownDamage = 0.0f;
-                _healthBar.TakeDamage(damageFromOcean);
+                _healthBar.TakeDamage(damageFromOcean, DamageType.DROWNING);
             }
         }
     }

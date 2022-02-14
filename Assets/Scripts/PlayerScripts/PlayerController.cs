@@ -364,7 +364,8 @@ namespace PlayerScripts
         private void FixedUpdate()
         {
             // If the player is dead, disable movement
-            if(_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD) return;
+            if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD)
+                return;
             HandleMovement();
         }
 

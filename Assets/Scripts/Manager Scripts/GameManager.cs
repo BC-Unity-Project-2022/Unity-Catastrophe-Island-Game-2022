@@ -35,6 +35,9 @@ public class GameManager : MonoBehaviour
     [HideInInspector] public PlayerLifeStatus playerLifeStatus { get; private set; }
     [HideInInspector] public float deathAnimationProgression = 0.0f; // a value 0 to 1 that shows the progress of the death screen animation
 
+    [HideInInspector]
+    public DamageType lastDamageType = DamageType.UNKNOWN;
+        
     private void Awake()
     {
         DontDestroyOnLoad(this);
@@ -58,7 +61,6 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {
-        Debug.Log(deathAnimationProgression);
         if (playerLifeStatus == PlayerLifeStatus.DEAD)
             // start the death animation
             deathAnimationProgression = Mathf.Clamp01(deathAnimationProgression + Time.deltaTime / deathAnimationTime);
@@ -94,6 +96,7 @@ public class GameManager : MonoBehaviour
         var prefab = Instantiate(playerPrefab, pos, rot);
         _playerController = prefab.GetComponent<PlayerController>();
         playerLifeStatus = PlayerLifeStatus.ALIVE;
+        deathAnimationProgression = 0;
     }
 
     public void KillPlayer()
