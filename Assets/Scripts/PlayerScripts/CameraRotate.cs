@@ -27,7 +27,7 @@ namespace PlayerScripts
         
         private GameManager _gameManager;
 
-        private void Awake()
+        private void Start()
         {
             _gameManager = FindObjectOfType<GameManager>();
         }
@@ -35,7 +35,7 @@ namespace PlayerScripts
         void FixedUpdate()
         {
             // do not move after death
-            if (!_gameManager.isPlayerAlive) return;
+            if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD) return;
             
             MouseMovementData mouseMovementData = new MouseMovementData()
             {

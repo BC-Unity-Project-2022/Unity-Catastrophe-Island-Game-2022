@@ -49,3 +49,4 @@ MonoBehaviour:
     - {x: 118, y: 55}
   playerHeight: 0
   playerPrefab: {fileID: 205212082722672703, guid: 37f344763fdd7574f9bfc348cdd96838, type: 3}
+  overallScreenShader: {fileID: 4800000, guid: b9cfe26910e6d904199291fc196c24aa, type: 3}

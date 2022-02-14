@@ -3,7 +3,7 @@ using UnityEngine;
 public class GameBootstrap : MonoBehaviour
 {
     [SerializeField] private GameObject gameManagerPrefab;
-    void Start()
+    void Awake()
     {
         if (!FindObjectOfType<GameManager>())
         {

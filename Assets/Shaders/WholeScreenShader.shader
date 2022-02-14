@@ -3,6 +3,7 @@ Shader "Unlit/WholeScreenShader"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _Color ("Color tint", Color) = (1, 1, 1, 1)
     }
     SubShader
     {
@@ -32,6 +33,7 @@ Shader "Unlit/WholeScreenShader"
                 float4 vertex : SV_POSITION;
             };
 
+            fixed4 _Color;
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
@@ -43,14 +45,18 @@ Shader "Unlit/WholeScreenShader"
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
-
+            
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);
+                
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
-                return col;
+                
+                fixed4 tintedColor = lerp(col, _Color, _Color.w);
+                
+                return tintedColor;
             }
             ENDCG
         }

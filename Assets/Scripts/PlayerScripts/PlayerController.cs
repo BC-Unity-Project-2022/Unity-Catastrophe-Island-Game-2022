@@ -78,7 +78,7 @@ namespace PlayerScripts
         
         private GameManager _gameManager;
 
-        private void Awake()
+        private void Start()
         {
             _rb = GetComponent<Rigidbody>();
             _physMat = new PhysicMaterial
@@ -364,7 +364,7 @@ namespace PlayerScripts
         private void FixedUpdate()
         {
             // If the player is dead, disable movement
-            if(!_gameManager.isPlayerAlive) return;
+            if(_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD) return;
             HandleMovement();
         }
 

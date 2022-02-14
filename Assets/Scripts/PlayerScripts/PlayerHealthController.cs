@@ -21,7 +21,7 @@ namespace PlayerScripts
 
         private GameManager _gameManager;
 
-        private void Awake()
+        private void Start()
         {
             var canvas = FindObjectOfType<Canvas>();
             var go = Instantiate(healthBarPrefab, canvas.gameObject.transform, true);
@@ -36,13 +36,11 @@ namespace PlayerScripts
 
         void Update()
         {
-            if (!_gameManager.isPlayerAlive) return;
+            if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD) return;
             // Check if the health is below or equal to 0
             if (_healthBar.currentHealth <= 0)
-            {
-                Debug.Log("Game over");
                 _gameManager.KillPlayer();
-            }
+            
             _lastFrameVerticalVelocity = _rb.velocity.y;
         }
 
