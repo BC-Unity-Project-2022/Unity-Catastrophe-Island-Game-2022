@@ -1,61 +1,65 @@
+using System;
 using Cinemachine;
 using UnityEngine;
 
-struct MouseMovementData
+namespace PlayerScripts
 {
-    public float h;
-    public float v;
-
-    public override string ToString()
+    struct MouseMovementData
     {
-        return $"h: {h}, v: {v}";
+        public float h;
+        public float v;
+
+        public override string ToString()
+        {
+            return $"h: {h}, v: {v}";
+        }
     }
-}
 
-public class CameraRotate : MonoBehaviour
-{
-    public Transform playerTransform;
-
-    public CinemachineVirtualCamera virtCam;
-    public int localVirtCamPriority = 10;
-    
-    public float rotationSpeedX = 10f;
-    public float rotationSpeedY = 10f;
-
-    public float maxLookUpRotation = 85;
-    public float minLookDownRotation = -85;
-
-    void FixedUpdate()
+    public class CameraRotate : MonoBehaviour
     {
-        MouseMovementData mouseMovementData = new MouseMovementData()
-        {
-            h = Input.GetAxis("Mouse X") * rotationSpeedX * Time.deltaTime,
-            v = -Input.GetAxis("Mouse Y") * rotationSpeedY * Time.deltaTime
-        };
+        public Transform playerTransform;
+
+        public float rotationSpeedX = 10f;
+        public float rotationSpeedY = 10f;
+
+        public float maxLookUpRotation = 85;
+        public float minLookDownRotation = -85;
         
-        if (Input.GetButton("Jump"))
+        private GameManager _gameManager;
+
+        private void Awake()
         {
-            // var cube = GameObject.CreatePrimitive(PrimitiveType.Cube); 
-            // cube.transform.position = new Vector3(0, 0.5f, 0);
+            _gameManager = FindObjectOfType<GameManager>();
         }
 
-        ApplyRotation(mouseMovementData);
-    }
+        void FixedUpdate()
+        {
+            // do not move after death
+            if (!_gameManager.isPlayerAlive) return;
+            
+            MouseMovementData mouseMovementData = new MouseMovementData()
+            {
+                h = Input.GetAxis("Mouse X") * rotationSpeedX * Time.deltaTime,
+                v = -Input.GetAxis("Mouse Y") * rotationSpeedY * Time.deltaTime
+            };
+            ApplyRotation(mouseMovementData);
+        }
 
     
-    private void ApplyRotation(MouseMovementData mouseMovementData)
-    {
-        Quaternion hQuaternion = Quaternion.AngleAxis(mouseMovementData.h, Vector3.up);
+        private void ApplyRotation(MouseMovementData mouseMovementData)
+        {
+            Quaternion hQuaternion = Quaternion.AngleAxis(mouseMovementData.h, Vector3.up);
         
-        playerTransform.rotation *= hQuaternion;
+            playerTransform.rotation *= hQuaternion;
         
-        Vector3 oldAimControlTransformRotation = transform.rotation.eulerAngles;
+            Vector3 oldAimControlTransformRotation = transform.rotation.eulerAngles;
 
-        float newRotX = oldAimControlTransformRotation.x + mouseMovementData.v;
-        // deal with the angles resetting to 0<= x < 360
-        if (newRotX > 180) newRotX = newRotX - 360;
-        oldAimControlTransformRotation.x = Mathf.Clamp(newRotX, minLookDownRotation, maxLookUpRotation);
+            float newRotX = oldAimControlTransformRotation.x + mouseMovementData.v;
+            // deal with the angles resetting to 0<= x < 360
+            if (newRotX > 180) newRotX = newRotX - 360;
+            oldAimControlTransformRotation.x = Mathf.Clamp(newRotX, minLookDownRotation, maxLookUpRotation);
         
-        transform.rotation = Quaternion.Euler(oldAimControlTransformRotation);
+            transform.rotation = Quaternion.Euler(oldAimControlTransformRotation);
+        }
     }
 }

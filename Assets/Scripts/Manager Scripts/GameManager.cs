@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using PlayerScripts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
@@ -19,8 +20,11 @@ public class GameManager : MonoBehaviour
     
     private MapData _currentMapData;
 
+    public bool isPlayerAlive { get; private set; }
+
     private void Awake()
     {
+        isPlayerAlive = false;
         DontDestroyOnLoad(this);
     }
 
@@ -63,7 +67,32 @@ public class GameManager : MonoBehaviour
     void SpawnPlayer(Vector3 pos, Quaternion rot)
     {
         if (_playerController != null) throw new Exception("Can not create a player because one exists already");
+        if (isPlayerAlive) throw new Exception("Can not create a player because the player is still alive");
         var prefab = Instantiate(playerPrefab, pos, rot);
         _playerController = prefab.GetComponent<PlayerController>();
+        isPlayerAlive = true;
+    }
+
+    public void KillPlayer()
+    {
+        isPlayerAlive = false;
+        // Lift the constraints on the rigidbody, to make it feel like a ragdoll
+        var rb = _playerController.GetComponent<Rigidbody>();
+        rb.constraints = RigidbodyConstraints.None;
+        
+        // change the centre of mass to prevent the player from rolling forever
+        rb.centerOfMass = new Vector3(0, 0, -1.0f);
+        rb.angularDrag = 0.9f;
+        
+        // Add more friction to prevent sliding
+        var playerCollider = _playerController.GetComponent<CapsuleCollider>();
+        playerCollider.material = new PhysicMaterial
+        {
+                bounciness = 0,
+                dynamicFriction = 0.9f,
+                staticFriction = 0.9f,
+                bounceCombine = PhysicMaterialCombine.Maximum,
+                frictionCombine = PhysicMaterialCombine.Maximum
+        };
     }
 }

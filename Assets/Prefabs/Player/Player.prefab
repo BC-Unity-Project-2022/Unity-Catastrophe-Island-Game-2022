@@ -134,6 +134,9 @@ MonoBehaviour:
   crouchAccelerationMultiplier: 1
   timeToCrouch: 0.2
   maxWaterMovementSpeed: 0
+  desiredDirection: {x: 0, y: 0, z: 0}
+  isJumping: 0
+  isCrouching: 0
 --- !u!54 &4109528134260082484
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -162,8 +165,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b391cc324fb26b742bdd922844d511e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageFromOcean: 20
-  damagePeriod: 1
+  damageFromOcean: 10
+  oceanDamagePeriod: 0.1
   minFallDamageVerticalVelocity: 15
   fallDamageCurve:
     serializedVersion: 2
@@ -377,9 +380,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   playerTransform: {fileID: 205212082722672692}
-  virtCam: {fileID: 4888921146803199581}
-  localVirtCamPriority: 10
   rotationSpeedX: 600
   rotationSpeedY: 300
   maxLookUpRotation: 85
   minLookDownRotation: -85
+  mouseMomentumDampeningOnDeath: 0

@@ -1,63 +1,70 @@
-using System;
 using UnityEngine;
 using UnityEngine.Serialization;
 
-public class PlayerHealthController : MonoBehaviour
+namespace PlayerScripts
 {
-    private float _timeSinceLastDrownDamage = 0.0f;
+    public class PlayerHealthController : MonoBehaviour
+    {
+        private float _timeSinceLastDrownDamage = 0.0f;
     
-    public float damageFromOcean;
-    public float damagePeriod = 0.1f;
+        public float damageFromOcean;
+        public float oceanDamagePeriod = 0.1f;
 
-    public float minFallDamageVerticalVelocity = 15f;
-    public AnimationCurve fallDamageCurve;
-    public float minSpeedForMaxFallDamage;
+        public float minFallDamageVerticalVelocity = 15f;
+        public AnimationCurve fallDamageCurve;
+        public float minSpeedForMaxFallDamage;
 
-    public GameObject healthBarPrefab;
-    private HealthBarScript _healthBar;
-    private Rigidbody _rb;
-    private float _lastFrameVerticalVelocity;
+        public GameObject healthBarPrefab;
+        private HealthBarScript _healthBar;
+        private Rigidbody _rb;
+        private float _lastFrameVerticalVelocity;
 
-    private void Awake()
-    {
-        var canvas = FindObjectOfType<Canvas>();
-        var go = Instantiate(healthBarPrefab, canvas.gameObject.transform, true);
-        
-        _healthBar = go.GetComponent<HealthBarScript>();
-        _healthBar.currentHealth = _healthBar.maxHealth;
+        private GameManager _gameManager;
 
-        _rb = GetComponent<Rigidbody>();
-    }
-
-    void Update()
-    {
-        // Check if the health is below or equal to 0
-        if (_healthBar.currentHealth <= 0)
+        private void Awake()
         {
-            // TODO: kill the player
-            Debug.Log("Game over");
+            var canvas = FindObjectOfType<Canvas>();
+            var go = Instantiate(healthBarPrefab, canvas.gameObject.transform, true);
+        
+            _healthBar = go.GetComponent<HealthBarScript>();
+            _healthBar.currentHealth = _healthBar.maxHealth;
+
+            _rb = GetComponent<Rigidbody>();
+            
+            _gameManager = FindObjectOfType<GameManager>();
         }
-        _lastFrameVerticalVelocity = _rb.velocity.y;
-    }
 
-    private void OnCollisionEnter(Collision collision)
-    {
-        // fall damage
-        // TODO: play a sound
-        float impactVelocity = Mathf.Abs(_lastFrameVerticalVelocity);
-        if (impactVelocity >= minFallDamageVerticalVelocity)
-            _healthBar.TakeDamage(_healthBar.maxHealth * fallDamageCurve.Evaluate((impactVelocity - minFallDamageVerticalVelocity) / (minSpeedForMaxFallDamage - minFallDamageVerticalVelocity)));
-    }
-
-    private void OnTriggerStay(Collider other)
-    {
-        if (!other.CompareTag("Ocean")) return;
-        _timeSinceLastDrownDamage += Time.fixedDeltaTime;
-        
-        if (_timeSinceLastDrownDamage >= damagePeriod)
+        void Update()
         {
-            _timeSinceLastDrownDamage = 0.0f;
-            _healthBar.TakeDamage(damageFromOcean);
+            if (!_gameManager.isPlayerAlive) return;
+            // Check if the health is below or equal to 0
+            if (_healthBar.currentHealth <= 0)
+            {
+                Debug.Log("Game over");
+                _gameManager.KillPlayer();
+            }
+            _lastFrameVerticalVelocity = _rb.velocity.y;
+        }
+
+        private void OnCollisionEnter(Collision collision)
+        {
+            // fall damage
+            // TODO: play a sound
+            float impactVelocity = Mathf.Abs(_lastFrameVerticalVelocity);
+            if (impactVelocity >= minFallDamageVerticalVelocity)
+                _healthBar.TakeDamage(_healthBar.maxHealth * fallDamageCurve.Evaluate((impactVelocity - minFallDamageVerticalVelocity) / (minSpeedForMaxFallDamage - minFallDamageVerticalVelocity)));
+        }
+
+        private void OnTriggerStay(Collider other)
+        {
+            if (!other.CompareTag("Ocean")) return;
+            _timeSinceLastDrownDamage += Time.fixedDeltaTime;
+        
+            if (_timeSinceLastDrownDamage >= oceanDamagePeriod)
+            {
+                _timeSinceLastDrownDamage = 0.0f;
+                _healthBar.TakeDamage(damageFromOcean);
+            }
         }
     }
 }
