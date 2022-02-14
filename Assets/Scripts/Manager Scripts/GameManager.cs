@@ -71,7 +71,7 @@ public class GameManager : MonoBehaviour
 
     void RespawnPlayer()
     {
-        Terrain currentTerrain = FindObjectOfType<Terrain>();
+        Terrain currentTerrain = GameObject.FindGameObjectWithTag("Ground").GetComponent<Terrain>();
         
         int spawnLocationIndex = Random.Range(0, _currentMapData.spawnLocations.Length);
         Vector2 rawSpawnLocation = _currentMapData.spawnLocations[spawnLocationIndex];

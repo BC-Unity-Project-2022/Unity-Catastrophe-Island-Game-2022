@@ -35,6 +35,7 @@ public class Tornadoes : MonoBehaviour
     private Tornado currentTornado;
     private float lastStartTime;
     private int executionLength;
+    private Terrain currentTerrain;
 
     private void OnTriggerEnter(Collider other)
     {
@@ -63,6 +64,7 @@ public class Tornadoes : MonoBehaviour
         tornadoTransform = gameObject.GetComponent<Transform>();
         tornadoParticleSystem = tornadoParticles.GetComponent<ParticleSystem>();
         tornadoCollider = gameObject.GetComponent<Collider>();
+        currentTerrain = GameObject.FindGameObjectWithTag("Ground").GetComponent<Terrain>();
 
         var psMain = tornadoParticleSystem.main;
         psMain.loop = true;
@@ -77,7 +79,7 @@ public class Tornadoes : MonoBehaviour
         Vector3 direction = currentTargetCoordinates - transform.position;
 
         Vector3 pos = transform.position;
-        pos.y = Terrain.activeTerrain.SampleHeight(transform.position);
+        pos.y = currentTerrain.SampleHeight(transform.position);
         transform.position = pos;
 
         transform.position += (direction.normalized * movementSpeed * Time.deltaTime);

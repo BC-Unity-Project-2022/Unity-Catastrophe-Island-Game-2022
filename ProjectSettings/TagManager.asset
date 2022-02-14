@@ -7,8 +7,9 @@ TagManager:
   - OJB
   - RandomPoint
   - Ground
-  - Swimmable
+  - Ocean
   - NonBreathable
+  - Swimmable
   layers:
   - Default
   - TransparentFX
