@@ -1,6 +1,7 @@
 using System;
 using UnityEngine;
 using UnityEngine.Serialization;
+using UnityEngine.UI;
 
 namespace PlayerScripts
 {
@@ -21,14 +22,16 @@ namespace PlayerScripts
         private float _lastFrameVerticalVelocity;
 
         private GameManager _gameManager;
+        private bool _initialised = false;
 
         private void Awake()
         {
             _healthBar = FindObjectOfType<HealthBarScript>();
+            
             _healthBar.currentHealth = _healthBar.maxHealth;
 
             _rb = GetComponent<Rigidbody>();
-            
+
         }
 
         private void Start()
@@ -38,6 +41,16 @@ namespace PlayerScripts
 
         void Update()
         {
+            if (!_initialised && _gameManager.playerLifeStatus != PlayerLifeStatus.NOT_IN_GAME)
+            {
+                _initialised = true;
+                var images = _healthBar.GetComponentsInChildren<Image>();
+                foreach (var image in images)
+                {
+                    image.enabled = true;
+                }
+            }
+            
             if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD) return;
             
             _lastFrameVerticalVelocity = _rb.velocity.y;

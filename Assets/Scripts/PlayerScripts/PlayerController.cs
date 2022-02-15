@@ -31,7 +31,6 @@ namespace PlayerScripts
 
         [SerializeField] private float fastAccelerationTimeAfterActiveStopping = 1.0f;
 
-        [SerializeField] private float groundCheckSphereDisplacement = 1.0f;
         [SerializeField] private float groundCheckSphereRadius = 1.0f;
     
         [Range(0.0f, 1.0f)]
@@ -49,6 +48,7 @@ namespace PlayerScripts
     
         [SerializeField] private float waterMaxMovementSpeedMultiplier;
         [SerializeField] private float waterSinkingSpeed;
+        [SerializeField] private float gravityUnderWater;
         public Vector3 desiredDirection;
         public bool isJumping;
         public bool isCrouching;
@@ -75,6 +75,7 @@ namespace PlayerScripts
 
         private ColliderShapeParams _colliderShapeParams;
         private int allLayersButPlayers = ~(1 << 6);
+        private int allLayersButPlayersAndWater = ~(1 << 4 | 1 << 6);
 
         private bool isSwimming;
         
@@ -129,7 +130,10 @@ namespace PlayerScripts
         
             // TODO: better ground detection and slopes
 
-            bool isOnTheFloor = Physics.CheckSphere(transform.position + Vector3.down * groundCheckSphereDisplacement, groundCheckSphereRadius, allLayersButPlayers);
+            Vector3 feetPosition = transform.position + new Vector3(0, _colliderShapeParams.VerticalDisplacement - _colliderShapeParams.Height / 2, 0);
+            
+            bool isOnTheFloor = Physics.CheckSphere(feetPosition, groundCheckSphereRadius, allLayersButPlayersAndWater);
+            
             if (isOnTheFloor) _lastTimeOnGround = Time.fixedTime;
         
             return isOnTheFloor;
@@ -192,13 +196,13 @@ namespace PlayerScripts
 
                     float radius = _mainCollider.radius;
 
-                    Vector3 sphereCenterDisplacement = new Vector3(0, _colliderHeight / 2 - radius, 0);
-
-                    if (!Physics.CheckCapsule(position + sphereCenterDisplacement, position - sphereCenterDisplacement,
+                    var desiredColliderShapeParams = GetColliderShapeParams(_crouchState, isInAir);
+                    Vector3 sphereCenterDisplacement = new Vector3(0, desiredColliderShapeParams.VerticalDisplacement + desiredColliderShapeParams.Height / 2 - radius, 0);
+                    
+                    if (Physics.CheckCapsule(position + sphereCenterDisplacement, position - sphereCenterDisplacement,
                         radius, allLayersButPlayers))
                     {
-                        wantToCrouch = false;
-                        desiredCrouchState = 1;
+                        desiredCrouchState = 0;
                     }
                 }
             
@@ -336,10 +340,11 @@ namespace PlayerScripts
                 isJumping = false;
             
                 bool canJump = !isInAir;
-                canJump &= !isSwimming;
+                
                 canJump &= Time.fixedTime - _previousJumpSecs >= jumpCooldownSecs;
                 // can not be mid crouch transition
                 canJump &= _crouchState < _crouchTolerance || _crouchState > 1 - _crouchTolerance;
+                
                 if (canJump)
                 {
                     float currentJumpVelocity = jumpVelocity;
@@ -388,7 +393,10 @@ namespace PlayerScripts
             {
                 Vector3 vel = _rb.velocity;
                 
-                if (isSwimming) vel.y = -waterSinkingSpeed;
+                // "gravity"
+                vel.y -= gravityUnderWater * Time.fixedDeltaTime;
+                
+                vel.y = Mathf.Clamp(vel.y, -waterSinkingSpeed, waterSinkingSpeed);
                 _rb.velocity = vel;
             }
             HandleMovement();
