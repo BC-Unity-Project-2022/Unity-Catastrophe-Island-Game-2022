@@ -24,10 +24,7 @@ namespace PlayerScripts
 
         private void Awake()
         {
-            var canvas = FindObjectOfType<Canvas>();
-            var go = Instantiate(healthBarPrefab, canvas.gameObject.transform, true);
-        
-            _healthBar = go.GetComponent<HealthBarScript>();
+            _healthBar = FindObjectOfType<HealthBarScript>();
             _healthBar.currentHealth = _healthBar.maxHealth;
 
             _rb = GetComponent<Rigidbody>();
