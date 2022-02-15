@@ -365,9 +365,19 @@ namespace PlayerScripts
 
         private void Update()
         {
-            desiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
-            isJumping |= Input.GetButtonDown("Jump"); // This is so that we do not forget the input if multiple updates are called before the fixedUpdate
-            isCrouching = Input.GetKey(KeyCode.LeftShift);
+            // If the player is dead, disable movement
+            if (_gameManager.playerLifeStatus == PlayerLifeStatus.ALIVE)
+            {
+                desiredDirection = new Vector3(Input.GetAxisRaw("Horizontal"), 0, Input.GetAxisRaw("Vertical"));
+                isJumping |= Input.GetButtonDown("Jump"); // This is so that we do not forget the input if multiple updates are called before the fixedUpdate
+                isCrouching = Input.GetKey(KeyCode.LeftShift);
+            }
+            else
+            {
+                desiredDirection = Vector3.zero;
+                isJumping = false;
+                isCrouching = false;
+            }
         }
 
         private void FixedUpdate()
@@ -381,10 +391,6 @@ namespace PlayerScripts
                 if (isSwimming) vel.y = -waterSinkingSpeed;
                 _rb.velocity = vel;
             }
-            
-            // If the player is dead, disable movement
-            if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD)
-                return;
             HandleMovement();
         }
 

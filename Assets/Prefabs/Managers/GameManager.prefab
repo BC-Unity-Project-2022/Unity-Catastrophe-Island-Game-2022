@@ -47,8 +47,13 @@ MonoBehaviour:
   - mapName: Game Scene
     spawnLocations:
     - {x: 118, y: 55}
+    Flyby: {fileID: 1080534890589210225, guid: 6792e14e9d1f4db4682de1cec5ce96bf, type: 3}
   playerPrefab: {fileID: 205212082722672703, guid: 37f344763fdd7574f9bfc348cdd96838, type: 3}
+  playerHeight: 2
   deathAnimationTime: 3
+  mapIntoTime: 5
+  mapCooldownAfterIntoTime: 0.1
   ragdollRotationEffectStrength: 2
+  playerLifeStatus: 0
   deathAnimationProgression: 0
   lastDamageType: 0

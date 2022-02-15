@@ -10,7 +10,6 @@ GameObject:
   m_Component:
   - component: {fileID: 5713490857040251480}
   - component: {fileID: 5820846133773606102}
-  - component: {fileID: 8048264170136576893}
   m_Layer: 0
   m_Name: GameBootstrap
   m_TagString: Untagged
@@ -44,21 +43,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ff97595d2dcbe95419292e1c493d4f16, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  networkManagerPrefab: {fileID: 8409327524072055259, guid: d228e9c6d98ae8349b0ad4eb7f3fdfac, type: 3}
   gameManagerPrefab: {fileID: 327792980388624611, guid: 766b4e7f77e63964c9cf00ece082e93e, type: 3}
---- !u!114 &8048264170136576893
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 2107822165658073063}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 951099334
-  AlwaysReplicateAsRoot: 0
-  DontDestroyWithOwner: 0
-  AutoObjectParentSync: 1

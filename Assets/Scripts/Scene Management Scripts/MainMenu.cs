@@ -1,11 +1,18 @@
+using System;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
+    private GameManager _gameManager;
+    public void Start()
+    {
+        _gameManager = FindObjectOfType<GameManager>();
+    }
+
     public void PlayGame()
     {
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex + 1);
+        _gameManager.StartNewMap();
     }
 
     public void Exit()
