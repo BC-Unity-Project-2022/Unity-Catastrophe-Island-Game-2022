@@ -34,7 +34,7 @@ public class GameManager : MonoBehaviour
     
     private MapData _currentMapData;
 
-    [HideInInspector] public PlayerLifeStatus playerLifeStatus { get; private set; }
+    [HideInInspector] public PlayerLifeStatus playerLifeStatus;
     [HideInInspector] public float deathAnimationProgression = 0.0f; // a value 0 to 1 that shows the progress of the death screen animation
 
     [HideInInspector]
@@ -88,6 +88,7 @@ public class GameManager : MonoBehaviour
     {
         MapData md = mapsData[0];
         _currentMapData = md;
+        playerLifeStatus = PlayerLifeStatus.NOT_IN_GAME;
         // load the map
         SceneManager.LoadSceneAsync(md.mapName, LoadSceneMode.Single);
     }
@@ -102,7 +103,7 @@ public class GameManager : MonoBehaviour
         deathAnimationProgression = 0;
     }
 
-    public void KillPlayer(float damagePower)
+    public void KillPlayer(float damagePower, bool externalSource=false)
     {
         // guaranteed to not be not a number
         float scaledDamagePower = Mathf.Log(Mathf.Abs(damagePower) + 1);

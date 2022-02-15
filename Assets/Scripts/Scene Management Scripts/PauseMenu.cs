@@ -8,6 +8,12 @@ public class PauseMenu : MonoBehaviour
     [SerializeField] GameObject pauseMenu;
 
     private int mainMenuSceneIndex = 0;
+    private GameManager _gameManager;
+
+    private void Start()
+    {
+        _gameManager = FindObjectOfType<GameManager>();
+    }
 
     private void Update()
     {
@@ -39,6 +45,7 @@ public class PauseMenu : MonoBehaviour
 
     public void LoadMainMenu()
     {
+        _gameManager.playerLifeStatus = PlayerLifeStatus.NOT_IN_GAME;
         Time.timeScale = 1f;
         SceneManager.LoadScene(mainMenuSceneIndex);
     }
