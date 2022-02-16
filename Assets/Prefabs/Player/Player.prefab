@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: -4332329704790432148}
   - component: {fileID: 4109528134260082484}
   - component: {fileID: 501196384857290266}
+  - component: {fileID: 8755421320194754890}
   m_Layer: 6
   m_Name: Player
   m_TagString: Untagged
@@ -205,6 +206,23 @@ MonoBehaviour:
     m_RotationOrder: 4
   minSpeedForMaxFallDamage: 40
   healthBarPrefab: {fileID: 1825685071426817851, guid: 7ea9874197d2081469b86bc2f3609afc, type: 3}
+--- !u!114 &8755421320194754890
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 205212082722672703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9631a8d4aa979454290c02b6762e6f79, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  buildings:
+  - prefab: {fileID: 8707665062400178608, guid: 99dc82ceb7288b14c93bc0a00d5ee5ae, type: 3}
+  maxDistanceToBuildingInitialPlacingSpot: 20
+  rotationSpeed: 30
+  hologramShaderMaterial: {fileID: 2100000, guid: a38dbb08f4456a94a9e4f31562208aad, type: 2}
 --- !u!1 &7087578593902294101
 GameObject:
   m_ObjectHideFlags: 0

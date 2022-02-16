@@ -89,6 +89,7 @@ public class GameManager : MonoBehaviour
     private OverlayManager _overlayManager;
     private HealthBarScript _healthBar;
     private GameOverScreenManager _gameOverScreen;
+    private Builder _builder;
 
     private void Awake()
     {
@@ -136,9 +137,10 @@ public class GameManager : MonoBehaviour
     void ClearUI()
     {
         _gameOverScreen.Hide();
-            
         _healthBar.Hide();
         _overlayManager.Hide();
+
+        if(_builder != null) _builder.Hide();
     }
 
     string GetTimeString(float currentTime)
@@ -276,6 +278,7 @@ public class GameManager : MonoBehaviour
         // logic behind respawning the player
         _playerController = go.GetComponent<PlayerController>();
         playerLifeStatus = PlayerLifeStatus.ALIVE;
+        _builder = _playerController.GetComponent<Builder>();
         deathAnimationProgression = 0;
         _gameBeginTime = Time.time;
         _gameOverTime = 0;

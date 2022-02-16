@@ -2550,7 +2550,7 @@ GameObject:
   - component: {fileID: 1800975802}
   - component: {fileID: 1800975801}
   - component: {fileID: 1800975800}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: Terrain
   m_TagString: Ground
   m_Icon: {fileID: 0}
