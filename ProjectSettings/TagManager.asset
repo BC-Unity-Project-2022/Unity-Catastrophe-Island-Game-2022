@@ -10,6 +10,7 @@ TagManager:
   - Ocean
   - NonBreathable
   - Swimmable
+  - BuildingMarker
   layers:
   - Default
   - TransparentFX
