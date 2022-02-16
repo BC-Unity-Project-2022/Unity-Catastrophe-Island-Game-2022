@@ -167,8 +167,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b391cc324fb26b742bdd922844d511e8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  damageFromOcean: 0
-  oceanDamagePeriod: 0.1
+  damageFromOcean: 20
+  oceanDamagePeriod: 0.5
   minFallDamageVerticalVelocity: 15
   fallDamageCurve:
     serializedVersion: 2

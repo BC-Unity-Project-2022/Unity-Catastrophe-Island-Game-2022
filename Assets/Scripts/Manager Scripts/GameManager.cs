@@ -2,10 +2,9 @@ using System;
 using System.Collections;
 using Cinemachine;
 using PlayerScripts;
+using TMPro;
 using UnityEngine;
-using UnityEngine.AI;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
 using Random = UnityEngine.Random;
 
 [Serializable]
@@ -52,6 +51,11 @@ public class GameManager : MonoBehaviour
     private CinemachineSmoothPath _currentFlyByPath;
     private CinemachineTrackedDolly _currentFlyByCamera;
 
+    private float _gameBeginTime;
+    private float _gameOverTime;
+
+    private TMP_Text _timer;
+
     private void Awake()
     {
         DontDestroyOnLoad(this);
@@ -81,8 +85,43 @@ public class GameManager : MonoBehaviour
         {
             // start the death animation
             deathAnimationProgression = Mathf.Clamp01(deathAnimationProgression + Time.deltaTime / deathAnimationTime);
-            if (Mathf.Abs(1 - deathAnimationProgression) < 0.01f) KillPlayerImmediate();
+            if (Mathf.Abs(1 - deathAnimationProgression) < 0.01f)
+            {
+                // show the stats
+                var gameOverScreen = GameObject.Find("GameOverScreen");
+                
+                foreach (var textMeshPro in gameOverScreen.GetComponentsInChildren<TMP_Text>())
+                    textMeshPro.enabled = true;
+
+                GameObject.Find("Game over Score").GetComponent<TMP_Text>().text = $"Time survived: {GetTimeString(_gameOverTime)}";
+                
+                KillPlayerImmediate();
+            }
         }
+
+        if (_timer != null) _timer.text = GetTimeString(Time.time);
+    }
+
+    void ClearUI()
+    {
+        var canvas = FindObjectOfType<Canvas>();
+        
+        foreach (var textMeshPro in canvas.GetComponentsInChildren<TMP_Text>())
+            textMeshPro.enabled = false;
+        
+        GameObject.Find("HealthBar").SetActive(false);
+    }
+
+    string GetTimeString(float currentTime)
+    {
+        float timeTaken = Mathf.Floor(currentTime - _gameBeginTime);
+        string mins = Mathf.Floor(timeTaken / 60).ToString();
+        string secs = (timeTaken % 60).ToString();
+
+        mins = mins.PadLeft(2, '0');
+        secs = secs.PadLeft(2, '0');
+        
+        return $"{mins}:{secs}";
     }
 
     Vector3 FindSpawnLocation()
@@ -203,10 +242,16 @@ public class GameManager : MonoBehaviour
         _playerController = go.GetComponent<PlayerController>();
         playerLifeStatus = PlayerLifeStatus.ALIVE;
         deathAnimationProgression = 0;
+        _gameBeginTime = Time.time;
+        _gameOverTime = 0;
+
+        _timer = GameObject.Find("Timer").GetComponent<TMP_Text>();
     }
 
     void KillPlayerImmediate()
     {
+        // if hasn't been registered as a kill, change that
+        if (_gameOverTime == 0f) _gameOverTime = Time.time;
         // Instantly kill
         playerLifeStatus = PlayerLifeStatus.NOT_IN_GAME;
         
@@ -219,6 +264,9 @@ public class GameManager : MonoBehaviour
     public void KillPlayer(float damagePower, bool externalSource=false)
     {
         if (playerLifeStatus != PlayerLifeStatus.ALIVE) return;
+        ClearUI();
+        
+        _gameOverTime = Time.time;
 
         playerLifeStatus = PlayerLifeStatus.DEAD;
         
