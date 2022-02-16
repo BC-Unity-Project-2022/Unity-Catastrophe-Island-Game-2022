@@ -172,8 +172,8 @@ public class Tornado : Disaster
 {
     public GameObject tornado;
 
-    public Tornado(GameObject tornado, Article article, DisasterName name, float strength, int executionLength, TMP_Text displayText) :
-        base(article, name, strength, executionLength, displayText)
+    public Tornado(GameObject tornado, Article article, DisasterName name, float strength, int executionLength) :
+        base(article, name, strength, executionLength)
     { this.tornado = tornado; }
 
     public override void ExecuteDisaster()

@@ -19,6 +19,20 @@ namespace PlayerScripts
         public Slider slider;
 
         private GameManager _gameManager;
+        [SerializeField] private Image borderImage;
+        [SerializeField] private Image fillImage;
+
+        public void Hide()
+        {
+            borderImage.enabled = false;
+            fillImage.enabled = false;
+        }
+
+        public void Show()
+        {
+            borderImage.enabled = true;
+            fillImage.enabled = true;
+        }
 
         public void Awake()
         {

@@ -2,11 +2,42 @@ using System;
 using System.Collections;
 using Cinemachine;
 using PlayerScripts;
+using TMPro;
 using UnityEngine;
-using UnityEngine.AI;
+using UnityEngine.PlayerLoop;
 using UnityEngine.SceneManagement;
-using UnityEngine.Serialization;
+using System.IO;
+using System.Linq;
+using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
+
+[Serializable]
+struct SaveData
+{
+    public float timeSurvived;
+
+    public SaveData(float time)
+    {
+        this.timeSurvived = time;
+    }
+
+    public override string ToString()
+    {
+        return $"Save Data (time: {this.timeSurvived})";
+    }
+
+    public static string ToString(SaveData[] dat)
+    {
+        string ret = "{";
+        foreach (var saveData in dat)
+        {
+            ret += saveData;
+        }
+
+        return ret + "}";
+    }
+}
 
 [Serializable]
 struct MapData
@@ -52,6 +83,13 @@ public class GameManager : MonoBehaviour
     private CinemachineSmoothPath _currentFlyByPath;
     private CinemachineTrackedDolly _currentFlyByCamera;
 
+    private float _gameBeginTime;
+    private float _gameOverTime;
+
+    private OverlayManager _overlayManager;
+    private HealthBarScript _healthBar;
+    private GameOverScreenManager _gameOverScreen;
+
     private void Awake()
     {
         DontDestroyOnLoad(this);
@@ -81,8 +119,38 @@ public class GameManager : MonoBehaviour
         {
             // start the death animation
             deathAnimationProgression = Mathf.Clamp01(deathAnimationProgression + Time.deltaTime / deathAnimationTime);
-            if (Mathf.Abs(1 - deathAnimationProgression) < 0.01f) KillPlayerImmediate();
+            if (Mathf.Abs(1 - deathAnimationProgression) < 0.01f)
+            {
+                // show the stats
+                ClearUI();
+                _gameOverScreen.Show();
+                _gameOverScreen.SetScoreMessage($"Time survived: {GetTimeString(_gameOverTime)}");
+
+                KillPlayerImmediate();
+            }
         }
+
+        if(_overlayManager != null) _overlayManager.SetTimerText(GetTimeString(Time.time));
+    }
+
+    void ClearUI()
+    {
+        _gameOverScreen.Hide();
+            
+        _healthBar.Hide();
+        _overlayManager.Hide();
+    }
+
+    string GetTimeString(float currentTime)
+    {
+        float timeTaken = Mathf.Floor(currentTime - _gameBeginTime);
+        string mins = Mathf.Floor(timeTaken / 60).ToString();
+        string secs = (timeTaken % 60).ToString();
+
+        mins = mins.PadLeft(2, '0');
+        secs = secs.PadLeft(2, '0');
+        
+        return $"{mins}:{secs}";
     }
 
     Vector3 FindSpawnLocation()
@@ -120,6 +188,12 @@ public class GameManager : MonoBehaviour
         // wait for the load
         yield return loadOperation;
 
+        _gameOverScreen = FindObjectOfType<GameOverScreenManager>();
+        _overlayManager = FindObjectOfType<OverlayManager>();
+        _healthBar = FindObjectOfType<HealthBarScript>();
+    
+        ClearUI();
+        
         _introProgression = 0.0f;
         _isPresentingMap = true;
 
@@ -203,22 +277,73 @@ public class GameManager : MonoBehaviour
         _playerController = go.GetComponent<PlayerController>();
         playerLifeStatus = PlayerLifeStatus.ALIVE;
         deathAnimationProgression = 0;
+        _gameBeginTime = Time.time;
+        _gameOverTime = 0;
+        
+        
+        _overlayManager.Show();
+        _healthBar.Show();
+    }
+
+    void SaveScore(SaveData data)
+    {
+        BinaryFormatter formatter = new BinaryFormatter();
+        string path = Application.persistentDataPath + "/scores.blob";
+
+        SaveData[] previousData = {};
+        
+        if (File.Exists(path))
+        {
+            FileStream inFileStream = new FileStream(path, FileMode.Open);
+            previousData = (SaveData[]) formatter.Deserialize(inFileStream);
+            inFileStream.Close();
+        }
+
+        SaveData[] newData = previousData.Concat(new [] {data}).ToArray();
+
+        FileStream outFileStream = new FileStream(path, FileMode.Create);
+        
+        formatter.Serialize(outFileStream, newData);
+        
+        outFileStream.Close();
+    }
+
+    SaveData[] LoadScores()
+    {
+        string path = Application.persistentDataPath + "/scores.blob";
+        if (File.Exists(path))
+        {
+            BinaryFormatter formatter = new BinaryFormatter();
+            FileStream fileStream = new FileStream(path, FileMode.Open);
+            
+            SaveData[] data = formatter.Deserialize(fileStream) is SaveData[] ? (SaveData[]) formatter.Deserialize(fileStream) : default;
+            
+            fileStream.Close();
+
+            return data;
+        }
+        
+        SaveData[] ret = {};
+        return ret;
     }
 
     void KillPlayerImmediate()
     {
+        // if hasn't been registered as a kill, change that
+        if (_gameOverTime == 0f) _gameOverTime = Time.time;
         // Instantly kill
         playerLifeStatus = PlayerLifeStatus.NOT_IN_GAME;
         
         if(_playerController != null) Destroy(_playerController.gameObject);
         _playerController = null;
-        
-        // TODO: redirect to a game over screen
     }
     
     public void KillPlayer(float damagePower, bool externalSource=false)
     {
         if (playerLifeStatus != PlayerLifeStatus.ALIVE) return;
+        ClearUI();
+        
+        _gameOverTime = Time.time;
 
         playerLifeStatus = PlayerLifeStatus.DEAD;
         
@@ -251,5 +376,7 @@ public class GameManager : MonoBehaviour
             
             rb.angularVelocity += new Vector3(Random.Range(-1.0f, 1.0f), Random.Range(-1.0f, 1.0f), Random.Range(-1.0f, 1.0f)) * magnitude;
         }
+        
+        SaveScore(new SaveData(_gameOverTime - _gameBeginTime));
     }
 }

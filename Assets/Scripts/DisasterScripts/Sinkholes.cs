@@ -15,8 +15,8 @@ public class Sinkhole : Disaster
 {
     public GameObject sinkhole;
 
-    public Sinkhole(GameObject sinkhole, Article article, DisasterName name, float strength, int executionLength, TMP_Text displayText) :
-        base(article, name, strength, executionLength, displayText)
+    public Sinkhole(GameObject sinkhole, Article article, DisasterName name, float strength, int executionLength) :
+        base(article, name, strength, executionLength)
     { this.sinkhole = sinkhole; }
 
     public override void ExecuteDisaster()

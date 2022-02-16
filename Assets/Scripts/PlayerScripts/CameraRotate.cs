@@ -35,16 +35,21 @@ namespace PlayerScripts
         void FixedUpdate()
         {
             // do not move after death
-            if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD)
+            if (_gameManager.playerLifeStatus != PlayerLifeStatus.ALIVE)
             {
-                // turn to the sky if drowning to make it look better
-                if (_gameManager.lastDamageType == DamageType.DROWNING)
+                if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD)
                 {
-                    Vector3 upEuler = transform.rotation.eulerAngles;
-                    upEuler.x = -90;
-                    
-                    transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(upEuler), 0.005f);
+                    // turn to the sky if drowning to make it look better
+                    if (_gameManager.lastDamageType == DamageType.DROWNING)
+                    {
+                        Vector3 upEuler = transform.rotation.eulerAngles;
+                        upEuler.x = -90;
+                        
+                        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(upEuler), 0.005f);
+                    }
                 }
+
+                return;
             }
             
             MouseMovementData mouseMovementData = new MouseMovementData()
