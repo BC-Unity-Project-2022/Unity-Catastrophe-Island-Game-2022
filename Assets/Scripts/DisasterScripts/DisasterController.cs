@@ -23,13 +23,13 @@ public enum Article
 
 public class DisasterController : MonoBehaviour
 {
+    [SerializeField] private OverlayManager _overlayManager;
     [SerializeField] private int minTimeBetweenDisasters;
     [SerializeField] private int maxTimeBetweenDisasters;
     [SerializeField] private float minStrength;
     [SerializeField] private float maxStrength;
     [SerializeField] private int minExecutionTime;
     [SerializeField] private int maxExecutionTime;
-    [SerializeField] private TMP_Text displayText;
 
     [SerializeField] private GameObject waterPlane;
     [SerializeField] private GameObject tornado;
@@ -113,12 +113,15 @@ public class DisasterController : MonoBehaviour
         disasterInfo.currentDisaster = disasterInfo.nextDisaster;
         disasterInfo.nextDisaster = GetRandomDisaster();
 
+        var currentDisaster = disasterInfo.currentDisaster;
+        _overlayManager.SetDisasterText($"{currentDisaster.article} {currentDisaster.name} is active!\nStrength: {currentDisaster.strength}\tLength: {currentDisaster.executionLength}s");
+        
         disasterInfo.currentDisaster.ExecuteDisaster();
     }
     
     private void ChangeIncomingText()
     {
-        displayText.text = $"{disasterInfo.nextDisaster.article} {disasterInfo.nextDisaster.name} is imminent in {textIteration}s!\nWatch out!";
+        _overlayManager.SetDisasterText($"{disasterInfo.nextDisaster.article} {disasterInfo.nextDisaster.name} is imminent in {textIteration}s!\nWatch out!");
 
         textIteration -= 1;
         lastCountdownTime = Time.time;
@@ -145,10 +148,10 @@ public class DisasterController : MonoBehaviour
         switch (disasterName)
         {
             case DisasterName.Flood:
-                disaster = new Flood(waterPlane, article, disasterName, strength, executionTime, displayText);
+                disaster = new Flood(waterPlane, article, disasterName, strength, executionTime);
                 break;
             case DisasterName.Tornado:
-                disaster = new Tornado(tornado, article, disasterName, strength, executionTime, displayText);
+                disaster = new Tornado(tornado, article, disasterName, strength, executionTime);
                 break;
             // case DisasterName.Earthquake:
             // disaster = new Earthquake(earthquake, article, disasterName, strength, executionTime, displayText);
@@ -173,21 +176,17 @@ public class Disaster
     public string article;
     public bool isActive;
 
-    TMP_Text displayText;
-
-    public Disaster(Article article, DisasterName name, float strength, int executionLength, TMP_Text displayText)
+    public Disaster(Article article, DisasterName name, float strength, int executionLength)
     {
         this.name = name.ToString();
         this.strength = strength;
         this.executionLength = executionLength;
         this.article = article.ToString();
-        this.displayText = displayText;
         this.isActive = false;
     }
 
     public virtual void ExecuteDisaster()
     {
-        displayText.text = $"{article} {name} is active!\nStrength: {strength}\tLength: {executionLength}s";
     }
 
     public virtual void EndDisaster()

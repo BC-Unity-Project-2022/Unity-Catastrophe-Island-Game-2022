@@ -9,6 +9,7 @@ using UnityEngine.SceneManagement;
 using System.IO;
 using System.Linq;
 using System.Runtime.Serialization.Formatters.Binary;
+using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 [Serializable]
@@ -85,7 +86,9 @@ public class GameManager : MonoBehaviour
     private float _gameBeginTime;
     private float _gameOverTime;
 
-    private TMP_Text _timer;
+    private OverlayManager _overlayManager;
+    private HealthBarScript _healthBar;
+    private GameOverScreenManager _gameOverScreen;
 
     private void Awake()
     {
@@ -119,28 +122,23 @@ public class GameManager : MonoBehaviour
             if (Mathf.Abs(1 - deathAnimationProgression) < 0.01f)
             {
                 // show the stats
-                var gameOverScreen = GameObject.Find("GameOverScreen");
-                
-                foreach (var textMeshPro in gameOverScreen.GetComponentsInChildren<TMP_Text>())
-                    textMeshPro.enabled = true;
-
-                GameObject.Find("Game over Score").GetComponent<TMP_Text>().text = $"Time survived: {GetTimeString(_gameOverTime)}";
+                ClearUI();
+                _gameOverScreen.Show();
+                _gameOverScreen.SetScoreMessage($"Time survived: {GetTimeString(_gameOverTime)}");
 
                 KillPlayerImmediate();
             }
         }
 
-        if (_timer != null) _timer.text = GetTimeString(Time.time);
+        if(_overlayManager != null) _overlayManager.SetTimerText(GetTimeString(Time.time));
     }
 
     void ClearUI()
     {
-        var canvas = FindObjectOfType<Canvas>();
-        
-        foreach (var textMeshPro in canvas.GetComponentsInChildren<TMP_Text>())
-            textMeshPro.enabled = false;
-        
-        GameObject.Find("HealthBar").SetActive(false);
+        _gameOverScreen.Hide();
+            
+        _healthBar.Hide();
+        _overlayManager.Hide();
     }
 
     string GetTimeString(float currentTime)
@@ -190,6 +188,12 @@ public class GameManager : MonoBehaviour
         // wait for the load
         yield return loadOperation;
 
+        _gameOverScreen = FindObjectOfType<GameOverScreenManager>();
+        _overlayManager = FindObjectOfType<OverlayManager>();
+        _healthBar = FindObjectOfType<HealthBarScript>();
+    
+        ClearUI();
+        
         _introProgression = 0.0f;
         _isPresentingMap = true;
 
@@ -275,8 +279,10 @@ public class GameManager : MonoBehaviour
         deathAnimationProgression = 0;
         _gameBeginTime = Time.time;
         _gameOverTime = 0;
-
-        _timer = GameObject.Find("Timer").GetComponent<TMP_Text>();
+        
+        
+        _overlayManager.Show();
+        _healthBar.Show();
     }
 
     void SaveScore(SaveData data)

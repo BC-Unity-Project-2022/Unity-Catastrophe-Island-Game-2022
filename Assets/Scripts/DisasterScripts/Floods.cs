@@ -94,8 +94,8 @@ public class Flood : Disaster
 {
     public GameObject waterPlane;
 
-    public Flood(GameObject waterPlane, Article article, DisasterName name, float strength, int executionLength, TMP_Text displayText) :
-        base(article, name, strength, executionLength, displayText)
+    public Flood(GameObject waterPlane, Article article, DisasterName name, float strength, int executionLength) :
+        base(article, name, strength, executionLength)
     { this.waterPlane = waterPlane; }
 
     public override void ExecuteDisaster()

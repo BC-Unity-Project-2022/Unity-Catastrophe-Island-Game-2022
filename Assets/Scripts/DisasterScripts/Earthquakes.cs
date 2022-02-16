@@ -15,8 +15,8 @@ public class Earthquake : Disaster
 {
     public GameObject earthquake;
 
-    public Earthquake(GameObject earthquake, Article article, DisasterName name, float strength, int executionLength, TMP_Text displayText) :
-        base(article, name, strength, executionLength, displayText)
+    public Earthquake(GameObject earthquake, Article article, DisasterName name, float strength, int executionLength) :
+        base(article, name, strength, executionLength)
     { this.earthquake = earthquake; }
 
     public override void ExecuteDisaster()
