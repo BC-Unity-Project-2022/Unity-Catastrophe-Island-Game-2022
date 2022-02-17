@@ -3,20 +3,26 @@ Shader "Unlit/BuildingHologram"
     Properties
     {
         _MainTex ("Texture", 2D) = "white" {}
+        _Color ("Color", Color) = (1, 0, 0, 1)
+        _SpeedX ("Speed x", float) = 1
+        _SpeedY ("Speed y", float) = 1
     }
     SubShader
     {
-        Tags { "RenderType"="Opaque" }
+        Tags {"Queue"="Transparent" "IgnoreProjector"="True" "RenderType"="Transparent"}
+        ZWrite Off
+        Blend SrcAlpha OneMinusSrcAlpha
+        Cull front 
         LOD 100
 
         Pass
         {
             CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
+            #pragma vertex vert alpha
+            #pragma fragment frag alpha
             // make fog work
             #pragma multi_compile_fog
-
+            
             #include "UnityCG.cginc"
 
             struct appdata
@@ -33,7 +39,10 @@ Shader "Unlit/BuildingHologram"
             };
 
             sampler2D _MainTex;
+            float4 _Color;
             float4 _MainTex_ST;
+            half _SpeedX;
+            half _SpeedY;
 
             v2f vert (appdata v)
             {
@@ -47,7 +56,19 @@ Shader "Unlit/BuildingHologram"
             fixed4 frag (v2f i) : SV_Target
             {
                 // sample the texture
-                fixed4 col = tex2D(_MainTex, i.uv);
+                float2 proposedCords = i.uv;
+
+                // TODO: maybe some sort of noise
+                proposedCords += float2(_Time.x * _SpeedX, _Time.y * _SpeedY);
+                
+                fixed4 col = tex2D(_MainTex, proposedCords);
+
+                if (col.x < 0.1 && col.y < 0.1 && col.z < 0.1) col = (0.2, 0.2, 0.2, 0.2);
+
+                col *= _Color;
+
+                col.w = 0.2;
+                
                 // apply fog
                 UNITY_APPLY_FOG(i.fogCoord, col);
                 return col;

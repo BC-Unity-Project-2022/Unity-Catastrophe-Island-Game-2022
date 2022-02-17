@@ -24,8 +24,7 @@ namespace PlayerScripts
         [SerializeField] private Building[] buildings;
         [SerializeField] private float maxDistanceToBuildingInitialPlacingSpot;
         [SerializeField] private float rotationSpeed;
-        [SerializeField] private Material validHologramShaderMaterial;
-        [SerializeField] private Material invalidHologramShaderMaterial;
+        [SerializeField] private Material baseHologramShaderMaterial;
         private State _state = State.NOT_BUILDING;
 
         private Camera _camera;
@@ -35,6 +34,9 @@ namespace PlayerScripts
 
         private float _buildingRotation;
         private Building _selectedBuilding;
+
+        private Material _hologramMaterial;
+        private static readonly int HologramColorPropertyId = Shader.PropertyToID("_Color");
 
         private void CenterOnTransform(Transform parent, Transform center)
         {
@@ -49,11 +51,13 @@ namespace PlayerScripts
         private void Start()
         {
             _camera = FindObjectOfType<Camera>();
+            _hologramMaterial = new Material(baseHologramShaderMaterial);
         }
 
         public void Hide()
         {
             _state = State.NOT_BUILDING;
+            if(_buildingHologramGameObject) Destroy(_buildingHologramGameObject);
         }
 
         public void SetAllMaterials(GameObject go, Material m)
@@ -66,6 +70,11 @@ namespace PlayerScripts
                     for (int i = 0; i < materialNum; i++) newMats[i] = m;
                     renderer.materials = newMats;
                 }
+        }
+
+        public void PickMaterialColor(bool isValid)
+        {
+            _hologramMaterial.SetColor(HologramColorPropertyId, isValid ? Color.green : Color.red);
         }
         
         /**
@@ -148,8 +157,7 @@ namespace PlayerScripts
             if (_state != State.NOT_BUILDING && 
                 (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Escape)))
             {
-                Debug.Log("Escaped the menu");
-                _state = State.NOT_BUILDING;
+                Hide();
                 return;
             }
             
@@ -193,7 +201,9 @@ namespace PlayerScripts
                             collider.enabled = false;
                         
                         // apply the shader
-                        SetAllMaterials(_buildingHologramGameObject, ValidatePlacement(_buildingHologramGameObject) ? validHologramShaderMaterial : invalidHologramShaderMaterial);
+                        bool isValid = ValidatePlacement(_buildingHologramGameObject);
+                        PickMaterialColor(isValid);
+                        SetAllMaterials(_buildingHologramGameObject, _hologramMaterial);
                         
                         _state = State.SHOWING_A_HOLOGRAM;
                         
@@ -215,7 +225,8 @@ namespace PlayerScripts
                     bool isPlacementValid = ValidatePlacement(_buildingHologramGameObject);
                     
                     // apply the shader
-                    SetAllMaterials(_buildingHologramGameObject, isPlacementValid ? validHologramShaderMaterial : invalidHologramShaderMaterial);
+                    PickMaterialColor(isPlacementValid);
+                    SetAllMaterials(_buildingHologramGameObject, _hologramMaterial);
 
                     // place the building
                     if (isPlacementValid && Input.GetMouseButtonDown(0))
