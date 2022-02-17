@@ -222,7 +222,8 @@ MonoBehaviour:
   - prefab: {fileID: 8707665062400178608, guid: 99dc82ceb7288b14c93bc0a00d5ee5ae, type: 3}
   maxDistanceToBuildingInitialPlacingSpot: 20
   rotationSpeed: 30
-  hologramShaderMaterial: {fileID: 2100000, guid: a38dbb08f4456a94a9e4f31562208aad, type: 2}
+  validHologramShaderMaterial: {fileID: 2100000, guid: a38dbb08f4456a94a9e4f31562208aad, type: 2}
+  invalidHologramShaderMaterial: {fileID: 2100000, guid: 2654a7655d352cf48908ce5ede7d2bca, type: 2}
 --- !u!1 &7087578593902294101
 GameObject:
   m_ObjectHideFlags: 0

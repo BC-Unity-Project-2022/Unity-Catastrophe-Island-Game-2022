@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.CompilerServices;
+using Building;
 using UnityEngine;
 
 namespace PlayerScripts
@@ -8,18 +9,6 @@ namespace PlayerScripts
     public struct Building
     {
         public GameObject prefab;
-    }
-
-    struct HologramPlacementResult
-    {
-        public Vector3 position;
-        public bool isOnGround;
-
-        public HologramPlacementResult(Vector3 pos, bool isOnGround)
-        {
-            this.position = pos;
-            this.isOnGround = isOnGround;
-        }
     }
 
     enum State
@@ -35,16 +24,27 @@ namespace PlayerScripts
         [SerializeField] private Building[] buildings;
         [SerializeField] private float maxDistanceToBuildingInitialPlacingSpot;
         [SerializeField] private float rotationSpeed;
-        [SerializeField] private Material hologramShaderMaterial;
+        [SerializeField] private Material validHologramShaderMaterial;
+        [SerializeField] private Material invalidHologramShaderMaterial;
         private State _state = State.NOT_BUILDING;
 
         private Camera _camera;
-        private GameObject _buildingGameObject;
+        private GameObject _buildingHologramGameObject;
 
         private int _groundLayerMask = 1 << 7;
 
         private float _buildingRotation;
         private Building _selectedBuilding;
+
+        private void CenterOnTransform(Transform parent, Transform center)
+        {
+            Vector3 displacement = center.position;
+            for(int i = 0; i < parent.childCount; i++)
+            {
+                Transform child = parent.transform.GetChild(i);
+                child.position -= displacement;
+            }
+        }
 
         private void Start()
         {
@@ -56,6 +56,18 @@ namespace PlayerScripts
             _state = State.NOT_BUILDING;
         }
 
+        public void SetAllMaterials(GameObject go, Material m)
+        {
+            // see this for more details https://answers.unity.com/questions/124794/how-to-replace-materials-in-the-materials-array.html
+            foreach (var renderer in go.GetComponentsInChildren<MeshRenderer>())
+                {
+                    int materialNum = renderer.materials.Length;
+                    Material[] newMats = new Material[materialNum];
+                    for (int i = 0; i < materialNum; i++) newMats[i] = m;
+                    renderer.materials = newMats;
+                }
+        }
+        
         /**
          * Returns -1 if no number keys were pressed, otherwise returns the key's number. Note that the "0" key is returned as 10
          */
@@ -81,7 +93,7 @@ namespace PlayerScripts
             return -1;
         }
 
-        HologramPlacementResult FindHologramPlacement()
+        Vector3 FindHologramPlacement()
         {
             RaycastHit hit;
             var cameraTransform = _camera.transform;
@@ -92,15 +104,40 @@ namespace PlayerScripts
             bool isOnGround = Physics.Raycast(ray, out hit, maxDistanceToBuildingInitialPlacingSpot, _groundLayerMask);
 
             if (isOnGround)
-                return new HologramPlacementResult(hit.point, true);
+                return hit.point;
 
             Vector3 finalPos = initialPos + maxDistanceToBuildingInitialPlacingSpot * lookDir;
+            finalPos.y = 1000;
             
             // raycast vertically down
             Physics.Raycast(new Ray(finalPos, Vector3.down), out hit, Mathf.Infinity, _groundLayerMask);
 
-            return new HologramPlacementResult(hit.point, false);
+            return hit.point;
         }
+
+        bool ValidatePlacement(GameObject go)
+        {
+            foreach (var groundLevelValidator in go.GetComponentsInChildren<GroundLevelValidator>())
+            {
+                Vector3 rayCastPos = groundLevelValidator.transform.position;
+
+                rayCastPos.y = 1000;
+                
+                // raycast vertically down
+                RaycastHit hit;
+                bool hasHit = Physics.Raycast(new Ray(rayCastPos, Vector3.down), out hit, Mathf.Infinity, _groundLayerMask);
+
+                if (hasHit)
+                {
+                    bool isBelowGround = hit.point.y > groundLevelValidator.transform.position.y;
+                    if (isBelowGround && !groundLevelValidator.belowGround) return false;
+                    if (!isBelowGround && groundLevelValidator.belowGround) return false;
+                }
+            }
+
+            return true;
+        }
+        
         void Update()
         {
             // rotate
@@ -130,55 +167,61 @@ namespace PlayerScripts
                     int numberKeyPressed = GetNumberKeyPressed();
                     if (numberKeyPressed == -1)
                         break;
+                    // spawn a hologram
                     if (numberKeyPressed <= buildings.Length)
                     {
                         Debug.Log("Showing a hologram");
                         _selectedBuilding = buildings[numberKeyPressed - 1];
                         
-                        // spawn a hologram
-                        
                         // find a place to spawn one in
-                        HologramPlacementResult newBuildingPlacement = FindHologramPlacement();
-                        _buildingGameObject =
-                            Instantiate(_selectedBuilding.prefab, newBuildingPlacement .position, Quaternion.identity);
+                        Vector3 newBuildingPlacement = FindHologramPlacement();
+
+                        Transform center = _selectedBuilding.prefab
+                            .GetComponentInChildren<BuildablePrefabCenterAnchor>().transform;
+                        
+                        // center the actual prefab
+                        CenterOnTransform(_selectedBuilding.prefab.transform, center);
+                        
+                        _buildingHologramGameObject =
+                            Instantiate(_selectedBuilding.prefab, newBuildingPlacement, Quaternion.identity);
                         
                         // remove all the colliders
-                        foreach (var collider in _buildingGameObject.GetComponentsInChildren<MeshCollider>())
+                        foreach (var collider in _buildingHologramGameObject.GetComponentsInChildren<MeshCollider>())
                             collider.enabled = false;
                         
-                        foreach (var collider in _buildingGameObject.GetComponentsInChildren<BoxCollider>())
+                        foreach (var collider in _buildingHologramGameObject.GetComponentsInChildren<BoxCollider>())
                             collider.enabled = false;
                         
                         // apply the shader
-                        // see this for more details https://answers.unity.com/questions/124794/how-to-replace-materials-in-the-materials-array.html
-                        foreach (var renderer in _buildingGameObject.GetComponentsInChildren<MeshRenderer>())
-                            {
-                                int materialNum = renderer.materials.Length;
-                                Material[] newMats = new Material[materialNum];
-                                for (int i = 0; i < materialNum; i++) newMats[i] = hologramShaderMaterial;
-                                renderer.materials = newMats;
-                            }
+                        SetAllMaterials(_buildingHologramGameObject, ValidatePlacement(_buildingHologramGameObject) ? validHologramShaderMaterial : invalidHologramShaderMaterial);
                         
                         _state = State.SHOWING_A_HOLOGRAM;
+                        
                         // reset the rotation
                         _buildingRotation = 0.0f;
                     }
                     break;
                 case State.SHOWING_A_HOLOGRAM:
                     
-                    HologramPlacementResult placement = FindHologramPlacement();
+                    // display the hologram
+                    Vector3 placement = FindHologramPlacement();
                     
-                    _buildingGameObject.transform.position = placement.position;
-                    Vector3 rot = _buildingGameObject.transform.rotation.eulerAngles;
+                    _buildingHologramGameObject.transform.position = placement;
+                    Vector3 rot = _buildingHologramGameObject.transform.rotation.eulerAngles;
                     rot.y = _buildingRotation;
                     Quaternion rotQuaternion = Quaternion.Euler(rot);
-                    _buildingGameObject.transform.rotation = rotQuaternion;
+                    _buildingHologramGameObject.transform.rotation = rotQuaternion;
+
+                    bool isPlacementValid = ValidatePlacement(_buildingHologramGameObject);
+                    
+                    // apply the shader
+                    SetAllMaterials(_buildingHologramGameObject, isPlacementValid ? validHologramShaderMaterial : invalidHologramShaderMaterial);
 
                     // place the building
-                    if (Input.GetMouseButtonDown(0))
+                    if (isPlacementValid && Input.GetMouseButtonDown(0))
                     {
-                        Destroy(_buildingGameObject);
-                        var go = Instantiate(_selectedBuilding.prefab, placement.position, rotQuaternion);
+                        Destroy(_buildingHologramGameObject);
+                        var go = Instantiate(_selectedBuilding.prefab, placement, rotQuaternion);
                         _state = State.NOT_BUILDING;
                     }
                         
