@@ -11,7 +11,7 @@ namespace PlayerScripts
         public GameObject prefab;
     }
 
-    enum State
+    public enum State
     {
         NOT_BUILDING,
         IN_BUILDING_MENU,
@@ -25,7 +25,9 @@ namespace PlayerScripts
         [SerializeField] private float maxDistanceToBuildingInitialPlacingSpot;
         [SerializeField] private float rotationSpeed;
         [SerializeField] private Material baseHologramShaderMaterial;
-        private State _state = State.NOT_BUILDING;
+        [HideInInspector] public State state = State.NOT_BUILDING;
+
+        private GameManager _gameManager;
 
         private Camera _camera;
         private GameObject _buildingHologramGameObject;
@@ -50,13 +52,14 @@ namespace PlayerScripts
 
         private void Start()
         {
-            _camera = FindObjectOfType<Camera>();
+            _camera = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
+            _gameManager = FindObjectOfType<GameManager>();
             _hologramMaterial = new Material(baseHologramShaderMaterial);
         }
 
         public void Hide()
         {
-            _state = State.NOT_BUILDING;
+            state = State.NOT_BUILDING;
             if(_buildingHologramGameObject) Destroy(_buildingHologramGameObject);
         }
 
@@ -149,25 +152,27 @@ namespace PlayerScripts
         
         void Update()
         {
+            if (_gameManager.playerLifeStatus != PlayerLifeStatus.ALIVE) return;
+            
             // rotate
             if (Input.GetKey("[")) _buildingRotation += rotationSpeed * Time.deltaTime;
             if (Input.GetKey("]")) _buildingRotation -= rotationSpeed * Time.deltaTime;
             
             // close the menu
-            if (_state != State.NOT_BUILDING && 
+            if (state != State.NOT_BUILDING && 
                 (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Escape)))
             {
                 Hide();
                 return;
             }
             
-            switch (_state)
+            switch (state)
             {
                 case State.NOT_BUILDING:
                     if (Input.GetKeyDown(KeyCode.B))
                     {
                         // Enter the building menu
-                        _state = State.IN_BUILDING_MENU;
+                        state = State.IN_BUILDING_MENU;
                         Debug.Log("In the building menu");
                     }
                     break;
@@ -205,7 +210,7 @@ namespace PlayerScripts
                         PickMaterialColor(isValid);
                         SetAllMaterials(_buildingHologramGameObject, _hologramMaterial);
                         
-                        _state = State.SHOWING_A_HOLOGRAM;
+                        state = State.SHOWING_A_HOLOGRAM;
                         
                         // reset the rotation
                         _buildingRotation = 0.0f;
@@ -233,7 +238,7 @@ namespace PlayerScripts
                     {
                         Destroy(_buildingHologramGameObject);
                         var go = Instantiate(_selectedBuilding.prefab, placement, rotQuaternion);
-                        _state = State.NOT_BUILDING;
+                        state = State.NOT_BUILDING;
                     }
                         
                     break;

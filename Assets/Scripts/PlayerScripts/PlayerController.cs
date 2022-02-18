@@ -396,6 +396,9 @@ namespace PlayerScripts
                 // "gravity"
                 vel.y -= gravityUnderWater * Time.fixedDeltaTime;
                 
+                // clamp the movement velocity, e.g. if the player was launched by a tornado, to make sure that they stop quickly
+                vel = Vector3.ClampMagnitude(vel,  2 * baseMovementSpeed * waterMaxMovementSpeedMultiplier);
+                
                 vel.y = Mathf.Clamp(vel.y, -waterSinkingSpeed, waterSinkingSpeed);
                 _rb.velocity = vel;
             }
