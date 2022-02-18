@@ -220,7 +220,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   axePrefab: {fileID: 1164328234615206, guid: e048a401410aa9f4791cdd97e15735ca, type: 3}
-  hand: {fileID: 0}
+  risingTime: 0.1
+  fallingTime: 0.4
 --- !u!114 &8755421320194754890
 MonoBehaviour:
   m_ObjectHideFlags: 0
