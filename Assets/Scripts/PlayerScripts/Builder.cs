@@ -9,9 +9,10 @@ namespace PlayerScripts
     public struct Building
     {
         public GameObject prefab;
+        public int woodRequirements;
     }
 
-    enum State
+    public enum State
     {
         NOT_BUILDING,
         IN_BUILDING_MENU,
@@ -25,7 +26,9 @@ namespace PlayerScripts
         [SerializeField] private float maxDistanceToBuildingInitialPlacingSpot;
         [SerializeField] private float rotationSpeed;
         [SerializeField] private Material baseHologramShaderMaterial;
-        private State _state = State.NOT_BUILDING;
+        [HideInInspector] public State state = State.NOT_BUILDING;
+
+        private GameManager _gameManager;
 
         private Camera _camera;
         private GameObject _buildingHologramGameObject;
@@ -37,6 +40,8 @@ namespace PlayerScripts
 
         private Material _hologramMaterial;
         private static readonly int HologramColorPropertyId = Shader.PropertyToID("_Color");
+
+        private PlayerItems _playerItems;
 
         private void CenterOnTransform(Transform parent, Transform center)
         {
@@ -50,13 +55,15 @@ namespace PlayerScripts
 
         private void Start()
         {
-            _camera = FindObjectOfType<Camera>();
+            _camera = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
+            _gameManager = FindObjectOfType<GameManager>();
+            _playerItems = GetComponent<PlayerItems>();
             _hologramMaterial = new Material(baseHologramShaderMaterial);
         }
 
         public void Hide()
         {
-            _state = State.NOT_BUILDING;
+            state = State.NOT_BUILDING;
             if(_buildingHologramGameObject) Destroy(_buildingHologramGameObject);
         }
 
@@ -146,29 +153,35 @@ namespace PlayerScripts
 
             return true;
         }
+
+        bool CheckBuildingMaterials(Building b)
+        {
+            return b.woodRequirements <= _playerItems.GetWoodLeft();
+        }
         
         void Update()
         {
+            if (_gameManager.playerLifeStatus != PlayerLifeStatus.ALIVE) return;
+            
             // rotate
             if (Input.GetKey("[")) _buildingRotation += rotationSpeed * Time.deltaTime;
             if (Input.GetKey("]")) _buildingRotation -= rotationSpeed * Time.deltaTime;
             
             // close the menu
-            if (_state != State.NOT_BUILDING && 
+            if (state != State.NOT_BUILDING && 
                 (Input.GetKeyDown(KeyCode.B) || Input.GetKeyDown(KeyCode.Escape)))
             {
                 Hide();
                 return;
             }
             
-            switch (_state)
+            switch (state)
             {
                 case State.NOT_BUILDING:
                     if (Input.GetKeyDown(KeyCode.B))
                     {
                         // Enter the building menu
-                        _state = State.IN_BUILDING_MENU;
-                        Debug.Log("In the building menu");
+                        state = State.IN_BUILDING_MENU;
                     }
                     break;
                 case State.IN_BUILDING_MENU:
@@ -178,8 +191,10 @@ namespace PlayerScripts
                     // spawn a hologram
                     if (numberKeyPressed <= buildings.Length)
                     {
-                        Debug.Log("Showing a hologram");
                         _selectedBuilding = buildings[numberKeyPressed - 1];
+                        
+                        // check if we can afford to build it
+                        if (!CheckBuildingMaterials(_selectedBuilding)) return;
                         
                         // find a place to spawn one in
                         Vector3 newBuildingPlacement = FindHologramPlacement();
@@ -205,7 +220,7 @@ namespace PlayerScripts
                         PickMaterialColor(isValid);
                         SetAllMaterials(_buildingHologramGameObject, _hologramMaterial);
                         
-                        _state = State.SHOWING_A_HOLOGRAM;
+                        state = State.SHOWING_A_HOLOGRAM;
                         
                         // reset the rotation
                         _buildingRotation = 0.0f;
@@ -231,9 +246,13 @@ namespace PlayerScripts
                     // place the building
                     if (isPlacementValid && Input.GetMouseButtonDown(0))
                     {
+                        // check if we can afford to build it
+                        if (!CheckBuildingMaterials(_selectedBuilding)) return;
+                        _playerItems.RemoveWood(_selectedBuilding.woodRequirements);
+                        
                         Destroy(_buildingHologramGameObject);
                         var go = Instantiate(_selectedBuilding.prefab, placement, rotQuaternion);
-                        _state = State.NOT_BUILDING;
+                        state = State.NOT_BUILDING;
                     }
                         
                     break;

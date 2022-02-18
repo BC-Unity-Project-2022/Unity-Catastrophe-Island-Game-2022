@@ -11,6 +11,8 @@ TagManager:
   - NonBreathable
   - Swimmable
   - BuildingMarker
+  - HeldItemCamera
+  - Tree
   layers:
   - Default
   - TransparentFX
@@ -20,7 +22,7 @@ TagManager:
   - UI
   - Players
   - Ground
-  - 
+  - HeldItems
   - 
   - 
   - 

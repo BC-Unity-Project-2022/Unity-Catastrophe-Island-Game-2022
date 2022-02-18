@@ -29,6 +29,10 @@ namespace PlayerScripts
 
         private void Start()
         {
+            // capture the cursor
+            Cursor.visible = false;
+            Cursor.lockState = CursorLockMode.Locked;
+            
             _gameManager = FindObjectOfType<GameManager>();
         }
 

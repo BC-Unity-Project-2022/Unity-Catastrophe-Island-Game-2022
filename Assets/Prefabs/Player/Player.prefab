@@ -15,6 +15,7 @@ GameObject:
   - component: {fileID: -4332329704790432148}
   - component: {fileID: 4109528134260082484}
   - component: {fileID: 501196384857290266}
+  - component: {fileID: 383868691695120687}
   - component: {fileID: 8755421320194754890}
   m_Layer: 6
   m_Name: Player
@@ -206,6 +207,24 @@ MonoBehaviour:
     m_RotationOrder: 4
   minSpeedForMaxFallDamage: 40
   healthBarPrefab: {fileID: 1825685071426817851, guid: 7ea9874197d2081469b86bc2f3609afc, type: 3}
+--- !u!114 &383868691695120687
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 205212082722672703}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: bab080e289f01ab42916062a85c4ee0f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  axePrefab: {fileID: 1164328234615206, guid: e048a401410aa9f4791cdd97e15735ca, type: 3}
+  risingTime: 0.1
+  fallingTime: 0.4
+  axeDamage: 40
+  castRadius: 0.2
+  castDistance: 1
 --- !u!114 &8755421320194754890
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -220,9 +239,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   buildings:
   - prefab: {fileID: 8707665062400178608, guid: 99dc82ceb7288b14c93bc0a00d5ee5ae, type: 3}
+    woodRequirements: 100
   maxDistanceToBuildingInitialPlacingSpot: 20
   rotationSpeed: 30
   baseHologramShaderMaterial: {fileID: 2100000, guid: 2654a7655d352cf48908ce5ede7d2bca, type: 2}
+  state: 0
 --- !u!1 &7087578593902294101
 GameObject:
   m_ObjectHideFlags: 0
