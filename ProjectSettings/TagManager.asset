@@ -12,6 +12,7 @@ TagManager:
   - Swimmable
   - BuildingMarker
   - HeldItemCamera
+  - Tree
   layers:
   - Default
   - TransparentFX

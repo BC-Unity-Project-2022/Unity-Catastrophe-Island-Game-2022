@@ -90,6 +90,7 @@ public class GameManager : MonoBehaviour
     private HealthBarScript _healthBar;
     private GameOverScreenManager _gameOverScreen;
     private Builder _builder;
+    private PlayerItems _playerItems;
 
     private void Awake()
     {
@@ -123,7 +124,7 @@ public class GameManager : MonoBehaviour
             if (Mathf.Abs(1 - deathAnimationProgression) < 0.01f)
             {
                 // show the stats
-                ClearUI();
+                ClearUIAndItems();
                 _gameOverScreen.Show();
                 _gameOverScreen.SetScoreMessage($"Time survived: {GetTimeString(_gameOverTime)}");
 
@@ -134,12 +135,13 @@ public class GameManager : MonoBehaviour
         if(_overlayManager != null) _overlayManager.SetTimerText(GetTimeString(Time.time));
     }
 
-    void ClearUI()
+    void ClearUIAndItems()
     {
         _gameOverScreen.Hide();
         _healthBar.Hide();
         _overlayManager.Hide();
-
+        
+        if(_playerItems != null) _playerItems.Hide();
         if(_builder != null) _builder.Hide();
     }
 
@@ -194,7 +196,7 @@ public class GameManager : MonoBehaviour
         _overlayManager = FindObjectOfType<OverlayManager>();
         _healthBar = FindObjectOfType<HealthBarScript>();
     
-        ClearUI();
+        ClearUIAndItems();
         
         _introProgression = 0.0f;
         _isPresentingMap = true;
@@ -278,6 +280,7 @@ public class GameManager : MonoBehaviour
         // logic behind respawning the player
         _playerController = go.GetComponent<PlayerController>();
         playerLifeStatus = PlayerLifeStatus.ALIVE;
+        _playerItems = _playerController.GetComponent<PlayerItems>();
         _builder = _playerController.GetComponent<Builder>();
         deathAnimationProgression = 0;
         _gameBeginTime = Time.time;
@@ -286,6 +289,7 @@ public class GameManager : MonoBehaviour
         
         _overlayManager.Show();
         _healthBar.Show();
+        _playerItems.Show();
     }
 
     void SaveScore(SaveData data)
@@ -344,7 +348,7 @@ public class GameManager : MonoBehaviour
     public void KillPlayer(float damagePower, bool externalSource=false)
     {
         if (playerLifeStatus != PlayerLifeStatus.ALIVE) return;
-        ClearUI();
+        ClearUIAndItems();
         
         _gameOverTime = Time.time;
 

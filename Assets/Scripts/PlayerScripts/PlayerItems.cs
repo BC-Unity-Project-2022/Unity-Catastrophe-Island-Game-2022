@@ -1,4 +1,6 @@
 using System;
+using JetBrains.Annotations;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
@@ -17,6 +19,11 @@ namespace PlayerScripts
         [SerializeField] private float risingTime;
         [SerializeField] private float fallingTime;
 
+        [SerializeField] private float axeDamage;
+
+        [SerializeField] private float castRadius = 0.2f;
+        [SerializeField] private float castDistance = 1f;
+
         private Camera _mainCamera;
         private Camera _heldItemCamera;
         private Transform _hand;
@@ -30,11 +37,22 @@ namespace PlayerScripts
 
         private AttackState _attackState = AttackState.NOT_ATTACKING;
         private float _attackActionProgress;
+        private int _allLayersButPlayers = ~(1 << 6);
+
+        private int _woodLeft = 0;
+        private TMP_Text _woodLeftText;
 
         public void Hide()
         {
             if(_heldItem != null) Destroy(_heldItem);
             _heldItem = null;
+            _woodLeftText.enabled = false;
+        }
+
+        public void Show()
+        {
+            _woodLeftText.enabled = true;
+            ResetWoodDisplay();
         }
 
         private void Start()
@@ -43,6 +61,7 @@ namespace PlayerScripts
             _builder = GetComponent<Builder>();
             _heldItemCamera = GameObject.FindGameObjectWithTag("HeldItemCamera").GetComponent<Camera>();
             _mainCamera = GameObject.FindGameObjectWithTag("MainCamera").GetComponent<Camera>();
+            _woodLeftText = GameObject.Find("Wood text").GetComponent<TMP_Text>();
             
             _hand = _heldItemCamera.transform.GetChild(0);
             _handBeforeAttack = _heldItemCamera.transform.GetChild(1);
@@ -54,6 +73,38 @@ namespace PlayerScripts
                 throw new Exception("A wrong gameobject has been referenced as the hand before the attack");
             if (_handDuringAttack.gameObject.name != "HandDuringAttack")
                 throw new Exception("A wrong gameobject has been referenced as the hand during the attack");
+        }
+
+        [CanBeNull]
+        private Collider CheckHit()
+        {
+            RaycastHit hit;
+            if (Physics.SphereCast(_mainCamera.transform.position, castRadius, _mainCamera.transform.forward, out hit,
+                castDistance, _allLayersButPlayers))
+                return hit.collider;
+            return null;
+        }
+
+        private void ResetWoodDisplay()
+        {
+            _woodLeftText.text = $"Wood: {_woodLeft}";
+        }
+
+        public int GetWoodLeft()
+        {
+            return _woodLeft;
+        }
+
+        public void RemoveWood(int wood)
+        {
+            int newWood = _woodLeft - wood;
+            if (newWood < 0) throw new Exception("Tried taking away more wood that we own");
+            SetWoodLeft(newWood);
+        }
+        private void SetWoodLeft(int wood)
+        {
+            _woodLeft = wood;
+            ResetWoodDisplay();
         }
 
         private void Update()
@@ -76,7 +127,7 @@ namespace PlayerScripts
             _heldItemCamera.transform.rotation = _mainCamera.transform.rotation;
 
             // start the attack
-            if (Input.GetMouseButtonDown(0) && _attackState == AttackState.NOT_ATTACKING)
+            if (Input.GetMouseButton(0) && _attackState == AttackState.NOT_ATTACKING)
             {
                 _attackState = AttackState.RISING;
                 _attackActionProgress = 0f;
@@ -86,10 +137,22 @@ namespace PlayerScripts
             if (_attackActionProgress >= 1f)
             {
                 _attackActionProgress = 0f;
-                if (_attackState == AttackState.RISING) _attackState = AttackState.FALLING;
+                if (_attackState == AttackState.RISING)
+                {
+                    Collider hitResult = CheckHit();
+                    if (hitResult != null)
+                    {
+                        TreeHealth treeHealthScript = hitResult.GetComponent<TreeHealth>();
+                        if (treeHealthScript) 
+                            if (treeHealthScript.Damage(axeDamage))
+                                SetWoodLeft(_woodLeft + treeHealthScript.CalculateWood());
+                    }
+                    _attackState = AttackState.FALLING;
+                }
                 else if (_attackState == AttackState.FALLING)
                 {
                     _attackState = AttackState.NOT_ATTACKING;
+                    // make sure that we return to the initial position
                     _hand.position = _handBeforeAttack.position;
                     _hand.rotation = _handBeforeAttack.rotation;
                 }

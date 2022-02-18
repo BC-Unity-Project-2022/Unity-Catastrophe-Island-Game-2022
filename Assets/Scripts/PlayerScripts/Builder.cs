@@ -9,6 +9,7 @@ namespace PlayerScripts
     public struct Building
     {
         public GameObject prefab;
+        public int woodRequirements;
     }
 
     public enum State
@@ -40,6 +41,8 @@ namespace PlayerScripts
         private Material _hologramMaterial;
         private static readonly int HologramColorPropertyId = Shader.PropertyToID("_Color");
 
+        private PlayerItems _playerItems;
+
         private void CenterOnTransform(Transform parent, Transform center)
         {
             Vector3 displacement = center.position;
@@ -54,6 +57,7 @@ namespace PlayerScripts
         {
             _camera = GameObject.FindWithTag("MainCamera").GetComponent<Camera>();
             _gameManager = FindObjectOfType<GameManager>();
+            _playerItems = GetComponent<PlayerItems>();
             _hologramMaterial = new Material(baseHologramShaderMaterial);
         }
 
@@ -149,6 +153,11 @@ namespace PlayerScripts
 
             return true;
         }
+
+        bool CheckBuildingMaterials(Building b)
+        {
+            return b.woodRequirements <= _playerItems.GetWoodLeft();
+        }
         
         void Update()
         {
@@ -173,7 +182,6 @@ namespace PlayerScripts
                     {
                         // Enter the building menu
                         state = State.IN_BUILDING_MENU;
-                        Debug.Log("In the building menu");
                     }
                     break;
                 case State.IN_BUILDING_MENU:
@@ -183,8 +191,10 @@ namespace PlayerScripts
                     // spawn a hologram
                     if (numberKeyPressed <= buildings.Length)
                     {
-                        Debug.Log("Showing a hologram");
                         _selectedBuilding = buildings[numberKeyPressed - 1];
+                        
+                        // check if we can afford to build it
+                        if (!CheckBuildingMaterials(_selectedBuilding)) return;
                         
                         // find a place to spawn one in
                         Vector3 newBuildingPlacement = FindHologramPlacement();
@@ -236,6 +246,10 @@ namespace PlayerScripts
                     // place the building
                     if (isPlacementValid && Input.GetMouseButtonDown(0))
                     {
+                        // check if we can afford to build it
+                        if (!CheckBuildingMaterials(_selectedBuilding)) return;
+                        _playerItems.RemoveWood(_selectedBuilding.woodRequirements);
+                        
                         Destroy(_buildingHologramGameObject);
                         var go = Instantiate(_selectedBuilding.prefab, placement, rotQuaternion);
                         state = State.NOT_BUILDING;
