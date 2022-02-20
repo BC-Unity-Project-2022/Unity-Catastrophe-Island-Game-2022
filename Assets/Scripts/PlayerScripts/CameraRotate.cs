@@ -27,11 +27,20 @@ namespace PlayerScripts
         
         private GameManager _gameManager;
 
-        private void Start()
+        public static void UnlockCursor()
         {
-            // capture the cursor
+            Cursor.visible = true;
+            Cursor.lockState = CursorLockMode.None;
+        }
+        public static void LockCursor()
+        {
             Cursor.visible = false;
             Cursor.lockState = CursorLockMode.Locked;
+        }
+
+        private void Start()
+        {
+            LockCursor();
             
             _gameManager = FindObjectOfType<GameManager>();
         }

@@ -55,6 +55,7 @@ public enum PlayerLifeStatus
 }
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] private string mainMenuSceneName;
     [SerializeField] private MapData[] mapsData;
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private float playerHeight;
@@ -334,7 +335,19 @@ public class GameManager : MonoBehaviour
         return ret;
     }
 
-    void KillPlayerImmediate()
+    public void LoadMainMenu()
+    {
+        KillPlayerImmediate();
+        
+        deathAnimationProgression = 0;
+        _gameBeginTime = 0;
+        _gameOverTime = 0;
+        
+        StopCoroutine(StartNewMapCoroutine());
+        SceneManager.LoadSceneAsync(mainMenuSceneName, LoadSceneMode.Single);
+    }
+
+    public void KillPlayerImmediate()
     {
         // if hasn't been registered as a kill, change that
         if (_gameOverTime == 0f) _gameOverTime = Time.time;
@@ -343,6 +356,8 @@ public class GameManager : MonoBehaviour
         
         if(_playerController != null) Destroy(_playerController.gameObject);
         _playerController = null;
+        
+        CameraRotate.UnlockCursor();
     }
     
     public void KillPlayer(float damagePower, bool externalSource=false)
