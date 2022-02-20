@@ -6,30 +6,24 @@ using UnityEngine.UI;
 
 public class GameOverScreenManager : MonoBehaviour
 {
-    [SerializeField] private TMP_Text gameOverText;
+    [SerializeField] private GameObject gameOverScreen;
     [SerializeField] private TMP_Text gameOverScore;
+    [SerializeField] private TMP_Text gameOverBestScore;
+
+    private GameManager _gameManager;
+    private void Start()
+    {
+        _gameManager = FindObjectOfType<GameManager>();
+    }
     
-    [SerializeField] private TMP_Text mainMenuButtonText;
-    [SerializeField] private Image mainMenuButtonImage;
-    [SerializeField] private Button mainMenuButton;
     public void Hide()
     {
-        gameOverText.enabled = false;
-        gameOverScore.enabled = false;
-        
-        mainMenuButtonText.enabled = false;
-        mainMenuButtonImage.enabled = false;
-        mainMenuButton.enabled = false;
+        gameOverScreen.SetActive(false);
     }
 
     public void Show()
     {
-        gameOverText.enabled = true;
-        gameOverScore.enabled = true;
-        
-        mainMenuButtonText.enabled = true;
-        mainMenuButtonImage.enabled = true;
-        mainMenuButton.enabled = true;
+        gameOverScreen.SetActive(true);
     }
 
     public void SetScoreMessage(string t)
@@ -39,6 +33,18 @@ public class GameOverScreenManager : MonoBehaviour
 
     public void ReturnToMainMenu()
     {
-        Debug.Log("Return to main menu");
+        _gameManager.LoadMainMenu();
+    }
+
+    public void UpdateBestScoreMessage()
+    {
+        var scores = _gameManager.LoadScores();
+        float maxScore = 0;
+        foreach (var saveData in scores)
+        {
+            if (maxScore < saveData.timeSurvived) maxScore = saveData.timeSurvived;
+        }
+
+        gameOverBestScore.text = $"Best score: {SaveData.GetTimeString(maxScore)}";
     }
 }

@@ -13,7 +13,7 @@ using UnityEngine.UI;
 using Random = UnityEngine.Random;
 
 [Serializable]
-struct SaveData
+public struct SaveData
 {
     public float timeSurvived;
 
@@ -37,6 +37,18 @@ struct SaveData
 
         return ret + "}";
     }
+    public static string GetTimeString(float timeTaken)
+    {
+        timeTaken = Mathf.Floor(timeTaken);
+        
+        string mins = Mathf.Floor(timeTaken / 60).ToString();
+        string secs = (timeTaken % 60).ToString();
+
+        mins = mins.PadLeft(2, '0');
+        secs = secs.PadLeft(2, '0');
+        
+        return $"{mins}:{secs}";
+    }
 }
 
 [Serializable]
@@ -55,6 +67,7 @@ public enum PlayerLifeStatus
 }
 public class GameManager : MonoBehaviour
 {
+    [SerializeField] private string mainMenuSceneName;
     [SerializeField] private MapData[] mapsData;
     [SerializeField] private GameObject playerPrefab;
     [SerializeField] private float playerHeight;
@@ -92,6 +105,8 @@ public class GameManager : MonoBehaviour
     private Builder _builder;
     private PlayerItems _playerItems;
 
+    private bool _isDeathAnimationOver = false;
+
     private void Awake()
     {
         DontDestroyOnLoad(this);
@@ -121,18 +136,21 @@ public class GameManager : MonoBehaviour
         {
             // start the death animation
             deathAnimationProgression = Mathf.Clamp01(deathAnimationProgression + Time.deltaTime / deathAnimationTime);
-            if (Mathf.Abs(1 - deathAnimationProgression) < 0.01f)
+            if (!_isDeathAnimationOver && Mathf.Abs(1 - deathAnimationProgression) < 0.01f)
             {
+                _isDeathAnimationOver = true;
+                
                 // show the stats
                 ClearUIAndItems();
                 _gameOverScreen.Show();
-                _gameOverScreen.SetScoreMessage($"Time survived: {GetTimeString(_gameOverTime)}");
+                _gameOverScreen.SetScoreMessage($"Time survived: {SaveData.GetTimeString(_gameOverTime - _gameBeginTime)}");
+                _gameOverScreen.UpdateBestScoreMessage();
 
                 KillPlayerImmediate();
             }
         }
 
-        if(_overlayManager != null) _overlayManager.SetTimerText(GetTimeString(Time.time));
+        if(_overlayManager != null) _overlayManager.SetTimerText(SaveData.GetTimeString(Time.time - _gameBeginTime));
     }
 
     void ClearUIAndItems()
@@ -143,18 +161,6 @@ public class GameManager : MonoBehaviour
         
         if(_playerItems != null) _playerItems.Hide();
         if(_builder != null) _builder.Hide();
-    }
-
-    string GetTimeString(float currentTime)
-    {
-        float timeTaken = Mathf.Floor(currentTime - _gameBeginTime);
-        string mins = Mathf.Floor(timeTaken / 60).ToString();
-        string secs = (timeTaken % 60).ToString();
-
-        mins = mins.PadLeft(2, '0');
-        secs = secs.PadLeft(2, '0');
-        
-        return $"{mins}:{secs}";
     }
 
     Vector3 FindSpawnLocation()
@@ -294,6 +300,7 @@ public class GameManager : MonoBehaviour
 
     void SaveScore(SaveData data)
     {
+        Debug.Log("Saving");
         BinaryFormatter formatter = new BinaryFormatter();
         string path = Application.persistentDataPath + "/scores.blob";
 
@@ -307,26 +314,33 @@ public class GameManager : MonoBehaviour
         }
 
         SaveData[] newData = previousData.Concat(new [] {data}).ToArray();
+        
+        Debug.Log("New data:");
+        foreach (var saveData in newData)
+        {
+            Debug.Log(saveData);
+        }
 
         FileStream outFileStream = new FileStream(path, FileMode.Create);
         
         formatter.Serialize(outFileStream, newData);
         
         outFileStream.Close();
+        Debug.Log("Finished saving");
     }
 
-    SaveData[] LoadScores()
+    public SaveData[] LoadScores()
     {
+        Debug.Log("Loading");
         string path = Application.persistentDataPath + "/scores.blob";
         if (File.Exists(path))
         {
             BinaryFormatter formatter = new BinaryFormatter();
-            FileStream fileStream = new FileStream(path, FileMode.Open);
             
-            SaveData[] data = formatter.Deserialize(fileStream) is SaveData[] ? (SaveData[]) formatter.Deserialize(fileStream) : default;
+            FileStream inFileStream = new FileStream(path, FileMode.Open);
+            var data = (SaveData[]) formatter.Deserialize(inFileStream);
+            inFileStream.Close();
             
-            fileStream.Close();
-
             return data;
         }
         
@@ -334,7 +348,19 @@ public class GameManager : MonoBehaviour
         return ret;
     }
 
-    void KillPlayerImmediate()
+    public void LoadMainMenu()
+    {
+        KillPlayerImmediate();
+        
+        deathAnimationProgression = 0;
+        _gameBeginTime = 0;
+        _gameOverTime = 0;
+        
+        StopCoroutine(StartNewMapCoroutine());
+        SceneManager.LoadSceneAsync(mainMenuSceneName, LoadSceneMode.Single);
+    }
+
+    public void KillPlayerImmediate()
     {
         // if hasn't been registered as a kill, change that
         if (_gameOverTime == 0f) _gameOverTime = Time.time;
@@ -343,16 +369,18 @@ public class GameManager : MonoBehaviour
         
         if(_playerController != null) Destroy(_playerController.gameObject);
         _playerController = null;
+        
+        CameraRotate.UnlockCursor();
     }
     
     public void KillPlayer(float damagePower, bool externalSource=false)
     {
         if (playerLifeStatus != PlayerLifeStatus.ALIVE) return;
-        ClearUIAndItems();
         
         _gameOverTime = Time.time;
 
         playerLifeStatus = PlayerLifeStatus.DEAD;
+        _isDeathAnimationOver = false;
         
         // guaranteed to not be not a number
         float scaledDamagePower = Mathf.Log(Mathf.Abs(damagePower) + 1);

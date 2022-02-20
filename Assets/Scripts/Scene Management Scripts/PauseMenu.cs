@@ -1,13 +1,14 @@
+using PlayerScripts;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
 public class PauseMenu : MonoBehaviour
 {
     public static bool isPaused = false;
-
+    private bool wasCursorLocked;
+    
     [SerializeField] GameObject pauseMenu;
 
-    private int mainMenuSceneIndex = 0;
     private GameManager _gameManager;
 
     private void Start()
@@ -31,6 +32,9 @@ public class PauseMenu : MonoBehaviour
 
     public void Resume()
     {
+        if (wasCursorLocked) CameraRotate.LockCursor();
+        else CameraRotate.UnlockCursor();
+        
         pauseMenu.SetActive(false);
         Time.timeScale = 1f;
         isPaused = false;
@@ -38,6 +42,9 @@ public class PauseMenu : MonoBehaviour
 
     private void Pause()
     {
+        wasCursorLocked = Cursor.lockState != CursorLockMode.None;
+        
+        CameraRotate.UnlockCursor();
         pauseMenu.SetActive(true);
         Time.timeScale = 0f;
         isPaused = true;
@@ -45,9 +52,8 @@ public class PauseMenu : MonoBehaviour
 
     public void LoadMainMenu()
     {
-        _gameManager.playerLifeStatus = PlayerLifeStatus.NOT_IN_GAME;
         Time.timeScale = 1f;
-        SceneManager.LoadScene(mainMenuSceneIndex);
+        _gameManager.LoadMainMenu();
     }
 
     public void QuitGame()

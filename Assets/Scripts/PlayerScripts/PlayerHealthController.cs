@@ -8,7 +8,8 @@ namespace PlayerScripts
     public class PlayerHealthController : MonoBehaviour
     {
         private float _timeSinceLastDrownDamage = 0.0f;
-    
+
+        public float timeBeforeDrowningStarts;
         public float damageFromOcean;
         public float oceanDamagePeriod = 0.1f;
 
@@ -23,6 +24,7 @@ namespace PlayerScripts
 
         private GameManager _gameManager;
         private bool _initialised = false;
+        private float _oxygenTimeLeft;
 
         private void Awake()
         {
@@ -31,7 +33,6 @@ namespace PlayerScripts
             _healthBar.currentHealth = _healthBar.maxHealth;
 
             _rb = GetComponent<Rigidbody>();
-
         }
 
         private void Start()
@@ -65,9 +66,25 @@ namespace PlayerScripts
                 _healthBar.TakeDamage(_healthBar.maxHealth * fallDamageCurve.Evaluate((impactVelocity - minFallDamageVerticalVelocity) / (minSpeedForMaxFallDamage - minFallDamageVerticalVelocity)), DamageType.FALL_DAMAGE);
         }
 
+        private void OnTriggerEnter(Collider other)
+        {
+            if (!other.CompareTag("NonBreathable")) return;
+            _oxygenTimeLeft = timeBeforeDrowningStarts;
+        }
+        private void OnTriggerExit(Collider other)
+        {
+            if (!other.CompareTag("NonBreathable")) return;
+            _oxygenTimeLeft = timeBeforeDrowningStarts;
+        }
         private void OnTriggerStay(Collider other)
         {
             if (!other.CompareTag("NonBreathable")) return;
+            if (_oxygenTimeLeft > 0)
+            {
+                _oxygenTimeLeft -= Time.fixedDeltaTime;
+                return;
+            }
+            
             _timeSinceLastDrownDamage += Time.fixedDeltaTime;
         
             if (_timeSinceLastDrownDamage >= oceanDamagePeriod)
