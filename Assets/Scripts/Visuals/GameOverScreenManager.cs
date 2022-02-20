@@ -8,6 +8,7 @@ public class GameOverScreenManager : MonoBehaviour
 {
     [SerializeField] private GameObject gameOverScreen;
     [SerializeField] private TMP_Text gameOverScore;
+    [SerializeField] private TMP_Text gameOverBestScore;
 
     private GameManager _gameManager;
     private void Start()
@@ -33,5 +34,17 @@ public class GameOverScreenManager : MonoBehaviour
     public void ReturnToMainMenu()
     {
         _gameManager.LoadMainMenu();
+    }
+
+    public void UpdateBestScoreMessage()
+    {
+        var scores = _gameManager.LoadScores();
+        float maxScore = 0;
+        foreach (var saveData in scores)
+        {
+            if (maxScore < saveData.timeSurvived) maxScore = saveData.timeSurvived;
+        }
+
+        gameOverBestScore.text = $"Best score: {SaveData.GetTimeString(maxScore)}";
     }
 }
