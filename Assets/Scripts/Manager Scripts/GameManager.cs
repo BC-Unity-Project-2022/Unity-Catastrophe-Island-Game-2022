@@ -107,6 +107,8 @@ public class GameManager : MonoBehaviour
 
     private bool _isDeathAnimationOver = false;
 
+    public float mouseSensitivityMultiplier = 1;
+
     private void Awake()
     {
         DontDestroyOnLoad(this);
