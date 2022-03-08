@@ -19,8 +19,8 @@ namespace PlayerScripts
     {
         public Transform playerTransform;
 
-        public float rotationSpeedX = 10f;
-        public float rotationSpeedY = 10f;
+        public float baseRotationSpeedX = 10f;
+        public float baseRotationSpeedY = 10f;
 
         public float maxLookUpRotation = 85;
         public float minLookDownRotation = -85;
@@ -48,22 +48,21 @@ namespace PlayerScripts
         void FixedUpdate()
         {
             // do not move after death
-            if (_gameManager.playerLifeStatus != PlayerLifeStatus.ALIVE)
+            if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD)
             {
-                if (_gameManager.playerLifeStatus == PlayerLifeStatus.DEAD)
+                // turn to the sky if drowning to make it look better
+                if (_gameManager.lastDamageType == DamageType.DROWNING)
                 {
-                    // turn to the sky if drowning to make it look better
-                    if (_gameManager.lastDamageType == DamageType.DROWNING)
-                    {
-                        Vector3 upEuler = transform.rotation.eulerAngles;
-                        upEuler.x = -90;
-                        
-                        transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(upEuler), 0.005f);
-                    }
+                    Vector3 upEuler = transform.rotation.eulerAngles;
+                    upEuler.x = -90;
+                    
+                    transform.rotation = Quaternion.Lerp(transform.rotation, Quaternion.Euler(upEuler), 0.005f);
                 }
-
-                return;
             }
+            if (_gameManager.playerLifeStatus != PlayerLifeStatus.ALIVE) return;
+
+            var rotationSpeedX = baseRotationSpeedX * _gameManager.mouseSensitivityMultiplier;
+            var rotationSpeedY = baseRotationSpeedY * _gameManager.mouseSensitivityMultiplier;
             
             MouseMovementData mouseMovementData = new MouseMovementData()
             {

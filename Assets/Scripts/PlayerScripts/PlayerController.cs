@@ -113,21 +113,6 @@ namespace PlayerScripts
 
         private bool isOnTheFloor()
         {
-            // RaycastHit hit;
-            // Does the ray intersect any objects excluding the player layer
-            // if (Physics.CheckSphere(transform.position + Vector3.down * groundCheckSphereDisplacement, groundCheckSphereRadius, allLayersButPlayers))
-            // {
-            //     Debug.DrawRay(transform.position + Vector3.down * groundCheckSphereDisplacement, Vector3.down * groundCheckSphereRadius, Color.yellow);
-            //     Debug.DrawRay(transform.position + Vector3.down * groundCheckSphereDisplacement, Vector3.left * groundCheckSphereRadius, Color.yellow);
-            //     Debug.Log("Hit");
-            // }
-            // else
-            // {
-            //     // debug.drawray(transform.position + vector3.down * groundcheckspheredisplacement, vector3.down * groundchecksphereradius, color.yellow);
-            //     // debug.drawray(transform.position + vector3.down * groundcheckspheredisplacement, vector3.left * groundchecksphereradius, color.yellow);
-            //     // debug.log("did not hit");
-            // }
-        
             // TODO: better ground detection and slopes
 
             Vector3 feetPosition = transform.position + new Vector3(0, _colliderShapeParams.VerticalDisplacement - _colliderShapeParams.Height / 2, 0);
