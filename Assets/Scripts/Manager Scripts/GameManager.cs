@@ -108,7 +108,7 @@ public class GameManager : MonoBehaviour
     private bool _isDeathAnimationOver = false;
 
     [HideInInspector]
-    public float mouseSensitivityMultiplier = 20;
+    public float mouseSensitivityMultiplier;
 
     private void Awake()
     {
