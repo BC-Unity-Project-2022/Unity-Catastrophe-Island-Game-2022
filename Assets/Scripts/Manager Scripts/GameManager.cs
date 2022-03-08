@@ -107,7 +107,8 @@ public class GameManager : MonoBehaviour
 
     private bool _isDeathAnimationOver = false;
 
-    public float mouseSensitivityMultiplier = 1;
+    [HideInInspector]
+    public float mouseSensitivityMultiplier = 20;
 
     private void Awake()
     {
@@ -302,7 +303,6 @@ public class GameManager : MonoBehaviour
 
     void SaveScore(SaveData data)
     {
-        Debug.Log("Saving");
         BinaryFormatter formatter = new BinaryFormatter();
         string path = Application.persistentDataPath + "/scores.blob";
 
@@ -316,24 +316,16 @@ public class GameManager : MonoBehaviour
         }
 
         SaveData[] newData = previousData.Concat(new [] {data}).ToArray();
-        
-        Debug.Log("New data:");
-        foreach (var saveData in newData)
-        {
-            Debug.Log(saveData);
-        }
 
         FileStream outFileStream = new FileStream(path, FileMode.Create);
         
         formatter.Serialize(outFileStream, newData);
         
         outFileStream.Close();
-        Debug.Log("Finished saving");
     }
 
     public SaveData[] LoadScores()
     {
-        Debug.Log("Loading");
         string path = Application.persistentDataPath + "/scores.blob";
         if (File.Exists(path))
         {
@@ -359,6 +351,7 @@ public class GameManager : MonoBehaviour
         _gameOverTime = 0;
         
         StopCoroutine(StartNewMapCoroutine());
+        
         SceneManager.LoadSceneAsync(mainMenuSceneName, LoadSceneMode.Single);
     }
 
